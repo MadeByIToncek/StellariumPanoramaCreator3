@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <!--suppress HtmlUnknownTarget -->
+    <link href="internal/bulma.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&display=block" rel="stylesheet"/>
+    <title></title>
+</head>
+
+<body style="margin: 16px">
+<div class="fixed-grid">
+    <div class="grid">
+        <div class="cell">
+            <button class="button" onclick="location.href = '/';">
+				<span class="icon">
+					<span class="material-symbols-rounded">arrow_back</span>
+				</span>
+                <span>Return</span>
+            </button>
+        </div>
+        <div class="cell"></div>
+        <div class="cell box">
+            <div class="field">
+                <label class="label">Stellarium address</label>
+                <div class="control has-icons-left has-icons-right">
+                    <input class="input" type="text">
+                    <span class="icon is-small is-left">
+						<span class="material-symbols-rounded">lan</span>
+					</span>
+                </div>
+            </div>
+            <button onclick="updateValues()" class="button is-primary" enabled="true">Update</button>
+        </div>
+        <div class="cell"></div>
+
+        <div class="cell box">
+            <h2 class="title is-2">Status</h2>
+            <div id="status-box">
+                <progress class="progress is-info" max="100">45%</progress>
+            </div>
+        </div>
+        <div class="cell"></div>
+        <div class="cell box">
+            <a href="https://bulma.io">
+                <img
+                        alt="Made with Bulma"
+                        height="24"
+                        src="https://bulma.io/assets/images/made-with-bulma.png"
+                        width="128">
+            </a>
+        </div>
+    </div>
+</div>
+</body>
+
+<script>
+    const unreachableError = "\n" +
+        "            <div class=\"notification is-danger\">\n" +
+        "                Unable to reach Stellarium instance!\n" +
+        "            </div>"
+
+    function updateValues() {
+
+    }
+</script>
+</html>

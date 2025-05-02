@@ -1,0 +1,96 @@
+package space.itoncek.spc3;
+
+
+import io.javalin.Javalin;
+import static io.javalin.apibuilder.ApiBuilder.*;
+import io.javalin.http.ContentType;
+import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
+import org.apache.commons.io.IOUtils;
+import org.hibernate.SessionFactory;
+import org.hibernate.jpa.HibernatePersistenceConfiguration;
+import org.hibernate.tool.schema.Action;
+import space.itoncek.spc3.database.KeyStore;
+import space.itoncek.spc3.database.SlideTrackTransition;
+import space.itoncek.spc3.database.StartEndTransition;
+import space.itoncek.spc3.database.Target;
+import space.itoncek.spc3.managers.StellariumCommsManager;
+import space.itoncek.spc3.managers.TransitionManager;
+
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.Objects;
+
+public class StellariumPanoramaCreator3 implements Closeable {
+	private final Javalin server;
+	public final SessionFactory sf;
+	private final StellariumCommsManager scm;
+
+	public StellariumPanoramaCreator3() {
+		sf = new HibernatePersistenceConfiguration("CVSS")
+				.managedClass(KeyStore.class)
+				.managedClass(SlideTrackTransition.class)
+				.managedClass(StartEndTransition.class)
+				.managedClass(Target.class)
+				.jdbcPoolSize(64)
+				// PostgreSQL
+				.jdbcUrl(System.getenv("PG_URL") == null ? "jdbc:postgresql://postgres:5432/spc3" : System.getenv("PG_URL"))
+				// Credentials
+				.jdbcUsername(System.getenv("PG_USR") == null ? "cvss" : System.getenv("PG_USR"))
+				.jdbcPassword(System.getenv("PG_PWD") == null ? "cvss" : System.getenv("PG_PWD"))
+				// Automatic schema export
+				.schemaToolingAction(Action.UPDATE)
+				// SQL statement logging
+				.showSql(true, false, true)
+				.createEntityManagerFactory();
+
+		TransitionManager tm = new TransitionManager(this);
+		scm = new StellariumCommsManager(this);
+
+		server = Javalin.create(cfg -> {
+					cfg.router.apiBuilder(() -> {
+						get("/", ctx -> {
+							ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);
+							asResourceStream(ctx,"/static/index.html");
+						});
+						get("/config", ctx -> {
+							ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);
+							asResourceStream(ctx,"/static/config.html");
+						});
+						get("/internal/bulma.css", ctx -> {
+							ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_CSS);
+							asResourceStream(ctx,"/static/internals/bulma.min.css");
+						});
+						path("api", () -> {
+							tm.registerPaths();
+							scm.registerPaths();
+						});
+					});
+				});
+	}
+
+	private void asResourceStream(Context ctx, String path) throws IOException {
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		IOUtils.copy(Objects.requireNonNull(getClass().getResourceAsStream(path)), baos);
+		ctx.result(baos.toByteArray());
+	}
+
+	private void start() {
+		server.start(4444);
+	}
+
+	public static void main(String[] args) {
+		StellariumPanoramaCreator3 m = new StellariumPanoramaCreator3();
+		m.start();
+
+		Runtime.getRuntime().addShutdownHook(new Thread(m::close));
+	}
+
+	@Override
+	public void close() {
+		server.stop();
+		scm.close();
+		sf.close();
+	}
+}
