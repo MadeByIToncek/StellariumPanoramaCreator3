@@ -51,3 +51,5 @@ CountdownLatch.prototype.countDown = function (){
 CountdownLatch.prototype.await = function(callback){
     this.waitBlock = callback;
 };
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));

@@ -17,6 +17,7 @@ import space.itoncek.spc3.database.StartEndTransition;
 import space.itoncek.spc3.database.Target;
 import space.itoncek.spc3.generics.Manager;
 import space.itoncek.spc3.managers.KeyStoreManager;
+import space.itoncek.spc3.managers.StartEndTransitionManager;
 import space.itoncek.spc3.managers.StellariumCommsManager;
 import space.itoncek.spc3.managers.TransitionManager;
 
@@ -24,6 +25,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 public class StellariumPanoramaCreator3 implements Closeable {
@@ -52,13 +54,40 @@ public class StellariumPanoramaCreator3 implements Closeable {
 		managers = new Manager[]{
 				new TransitionManager(this),
 				new StellariumCommsManager(this),
-				new KeyStoreManager(this)
+				new KeyStoreManager(this),
+				new StartEndTransitionManager(this)
 		};
 
 		server = Javalin.create(cfg -> cfg.router.apiBuilder(() -> {
 			get("/", ctx -> {
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);
 				asResourceStream(ctx, "/static/index.html");
+			});
+			get("/transition/{transition-id}", ctx -> {
+				try {
+					UUID uuid = UUID.fromString(ctx.pathParam("transition-id"));
+					ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);
+					sf.runInTransaction(em -> {
+						try {
+							SlideTrackTransition stt = em.find(SlideTrackTransition.class, uuid);
+							StartEndTransition set = em.find(StartEndTransition.class, uuid);
+
+							if (stt == null && set != null) {
+								asResourceStream(ctx, "/static/startend_transition_editor.html");
+							} else if (stt != null && set == null) {
+								asResourceStream(ctx, "/static/slidetrack_transition_editor.html");
+							} else if (stt == null) {
+								throw new IllegalArgumentException("Database contains no such UUID!");
+							} else {
+								throw new IllegalArgumentException("What?");
+							}
+						} catch (IOException e) {
+							ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.TEXT_PLAIN).result("Unable to serve that page!! " + e.getMessage());
+						}
+					});
+				} catch (IllegalArgumentException e) {
+					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.TEXT_PLAIN).result("That is not a valid UUID! " + e.getMessage());
+				}
 			});
 			get("/config", ctx -> {
 				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);

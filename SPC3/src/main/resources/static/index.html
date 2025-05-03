@@ -12,7 +12,7 @@
         <div class="fixed-grid">
             <div class="grid">
                 <div class="cell box">
-                    <table class="table">
+                    <table class="table" onload="updateTable()">
                         <thead>
                         <th>
                             <abbr title="Transition sequence id">UUID</abbr>
@@ -52,7 +52,7 @@
         </div>
     </body>
 
-    <script src="/internal/commons.js" async></script>
+    <script src="/internal/commons.js"></script>
     <script>
         let template = "<tr>\n" +
         "    <th>\n" +
@@ -116,6 +116,7 @@
         }
 
         function updateTable() {
+            console.log("update!")
             let tbody = document.getElementById("body");
             tbody.innerHTML = "";
             httpGetAsync("/api/transitions/list", (res,status) => {
@@ -137,7 +138,6 @@
                 })
             })
         }
-
-        updateTable();
+        updateTable()
     </script>
 </html>

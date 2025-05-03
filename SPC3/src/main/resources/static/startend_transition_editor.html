@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="/internal/bulma.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&display=block" rel="stylesheet"/>
+    <title></title>
+</head>
+
+<body>
+    <div style="margin: 16px">
+        <button class="button" onclick="location.href = '/';">
+                <span class="icon">
+                    <span class="material-symbols-rounded">arrow_back</span>
+                </span>
+            <span>Return</span>
+        </button>
+    </div>
+    <div class="columns" style="margin: 16px">
+        <div class="column box" style="margin: 16px" id="startbox">
+            <div class="skeleton-lines">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+        <div class="column box" style="margin: 16px">
+<!--            <div class="skeleton-lines">-->
+<!--                <div></div>-->
+<!--                <div></div>-->
+<!--                <div></div>-->
+<!--                <div></div>-->
+<!--                <div></div>-->
+<!--                <div></div>-->
+<!--            </div>-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <div class="field">
+                <label class="label">Name</label>
+                <div class="control">
+                    <input class="input" type="text" id="name" placeholder="Text input">
+                </div>
+            </div>
+            <div class="field">
+                <label class="label">Duration</label>
+                <div class="control">
+                    <input class="input" type="text" id="duration" placeholder="Text input" oninput='validateDuration("duration")'></div>
+            </div>
+
+            <div class="field has-addons">
+                <p class="control">
+                    <button class="button" onclick="saveCore()">
+                        <span class="icon is-small">
+                            <span class="material-symbols-rounded">save</span>
+                        </span>
+                        <span>Save</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button" onclick="preview()">
+                        <span class="icon is-small">
+                            <span class="material-symbols-rounded">preview</span>
+                        </span>
+                        <span>Preview</span>
+                    </button>
+                </p>
+                <p class="control">
+                    <button class="button" onclick="render()">
+                        <span class="icon is-small">
+                            <span class="material-symbols-rounded">blender</span>
+                        </span>
+                        <span>Render</span>
+                    </button>
+                </p>
+            </div>
+
+            <div id="notif"><!-- Notifications appear here!--> </div>
+        </div>
+        <div class="column box" style="margin: 16px" id="endbox">
+            <div class="skeleton-lines">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+        </div>
+    </div>
+</body>
+<script src="/internal/commons.js"></script>
+<script>
+    const uuid = window.location.pathname.split("/")[2];
+    let startTarget = {};
+    let endTarget = {};
+
+    const dateRegex = /^([0-9]{4})(-?)(1[0-2]|0[1-9])\2(3[01]|0[1-9]|[12][0-9])$/gm;
+    const timeRegex = /^(2[0-3]|[01][0-9]):?([0-5][0-9]):?([0-5][0-9])$/gm;
+    const durationRegex = /^([0-5][0-9]):?([0-5][0-9])$/gm;
+
+
+    const Object = "" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Mode</label>\n" +
+        "    <div class=\"select\">\n" +
+        "        <label>\n" +
+        "            <select id='{0}-mode' oninput='updateMode(\"{0}\")'>\n" +
+        "                <option>Object</option>\n" +
+        "                <option>AzAlt</option>\n" +
+        "            </select>\n" +
+        "        </label>\n" +
+        "    </div>\n" +
+        "</div>\n"+
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Target</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-object\" placeholder=\"Mars\" value=\"{1}\">\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Date</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-date\" placeholder=\"1970-01-01\" value=\"{2}\" oninput='validateDate(\"{0}-date\")'>\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Time</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-time\" placeholder=\"00:00\" value=\"{3}\" oninput='validateTime(\"{0}-time\")'>\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field has-addons\">\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" onclick=\"{0}RetargetObjectStellarium()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">my_location</span>\n" +
+        "            </span>\n" +
+        "            <span>Target in Stellarium</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" onclick=\"{0}CopyObjectCurrent()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">content_copy</span>\n" +
+        "            </span>\n" +
+        "            <span>Copy current</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" onclick=\"{0}SaveObject()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">save</span>\n" +
+        "            </span>\n" +
+        "            <span>Save</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "</div>";
+
+    const AzAlt = "" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Mode</label>\n" +
+        "    <div class=\"select\">\n" +
+        "        <label>\n" +
+        "            <select id='{0}-mode' oninput='updateMode(\"{0}\")'>\n" +
+        "                <option>Object</option>\n" +
+        "                <option>AzAlt</option>\n" +
+        "            </select>\n" +
+        "        </label>\n" +
+        "    </div>\n" +
+        "</div>\n"+
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Azimuth</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"number\" id=\"{0}-azimuth\" placeholder=\"270.13245\" value=\"{1}\">\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Altitude</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"number\" id=\"{0}-altitude\" placeholder=\"14.78564\" value=\"{2}\">\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Date</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-date\" placeholder=\"1970-01-01\" value=\"{3}\" oninput='validateDate(\"{0}-date\")'>\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Time</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-time\" placeholder=\"00:00:00\" value=\"{4}\" oninput='validateTime(\"{0}-time\")'>\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field has-addons\">\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" onclick=\"{0}RetargetStellarium()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">my_location</span>\n" +
+        "            </span>\n" +
+        "            <span>Target in Stellarium</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" onclick=\"{0}CopyCurrent()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">content_copy</span>\n" +
+        "            </span>\n" +
+        "            <span>Copy current</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" onclick=\"{0}Save()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">save</span>\n" +
+        "            </span>\n" +
+        "            <span>Save</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "</div>";
+
+    let notifTemplate = "<div class=\"notification {0}\">\n" +
+        "    <button class=\"delete\" onclick='clearNotification()'></button>\n" +
+        "    {1}\n" +
+        "</div>"
+
+    function prepareVariables() {
+        const latch = new CountdownLatch(2);
+        let failed = false;
+        httpGetAsync("/api/setm/" + uuid + "/start", (res, status) => {
+            if(status !== 200) {
+                error("Unable to get start target! \n" + JSON.parse(res).error)
+                latch.countDown()
+                failed = true;
+                return
+            }
+            startTarget = JSON.parse(res);
+            latch.countDown();
+        })
+        httpGetAsync("/api/setm/" + uuid + "/end", (res, status) => {
+            if(status !== 200) {
+                error("Unable to get end target! \n" + JSON.parse(res).error)
+                latch.countDown()
+                failed = true;
+                return
+            }
+            endTarget = JSON.parse(res);
+            latch.countDown();
+        })
+        latch.await(()=> {
+            if(!failed) constructUI();
+        })
+    }
+
+    function constructUI() {
+        if(startTarget.type === "Object") {
+            document.getElementById("startbox").innerHTML = format(Object, "start", startTarget.name, startTarget.date, startTarget.time)
+        } else if(startTarget.type === "AzAlt"){
+            document.getElementById("startbox").innerHTML = format(AzAlt, "start", startTarget.az, startTarget.alt, startTarget.date, startTarget.time)
+        }
+        document.getElementById("start-mode").value = startTarget.type;
+
+        if(endTarget.type === "Object") {
+            document.getElementById("endbox").innerHTML = format(Object, "end", endTarget.name, endTarget.date, endTarget.time)
+        } else if(endTarget.type === "AzAlt"){
+            document.getElementById("endbox").innerHTML = format(AzAlt, "end", endTarget.az, endTarget.alt, endTarget.date, endTarget.time)
+        }
+        document.getElementById("end-mode").value = startTarget.type;
+
+        validateTime("start-time")
+        validateDate("start-date")
+        validateTime("end-time")
+        validateDate("end-date")
+    }
+
+    function clearNotification() {
+        let tbody = document.getElementById("notif");
+        tbody.innerHTML = "";
+    }
+
+    function error(result) {
+        let tbody = document.getElementById("notif");
+        if(result == null) {
+            result = "Undefined error!";
+        }
+        tbody.innerHTML = format(notifTemplate,"is-danger",result);
+    }
+
+    function updateMode(target) {
+
+    }
+
+    function startRetargetStellarium() {
+
+    }
+
+    function endRetargetStellarium(){
+
+    }
+
+    function startCopyCurrent() {
+
+    }
+
+    function endCopyCurrent(){
+
+    }
+
+    function startRetargetObjectStellarium() {
+
+    }
+
+    function endRetargetObjectStellarium(){
+
+    }
+
+    function startCopyObjectCurrent() {
+
+    }
+
+    function endCopyObjectCurrent(){
+
+    }
+
+    function startSave() {
+
+    }
+
+    function endSave() {
+
+    }
+
+    function startSaveObject() {
+
+    }
+
+    function endSaveObject() {
+
+    }
+
+    function saveCore() {
+
+    }
+
+    function preview() {
+
+    }
+
+    function render() {
+
+    }
+
+    function validateDate(object) {
+        let input = document.getElementById(object).value;
+        dateRegex.lastIndex = 0;
+        if (dateRegex.test(input)) {
+            document.getElementById(object).classList.remove("is-danger")
+            document.getElementById(object).classList.add("is-success")
+        } else {
+            document.getElementById(object).classList.remove("is-success")
+            document.getElementById(object).classList.add("is-danger")
+        }
+    }
+
+    function validateTime(object) {
+        let input = document.getElementById(object).value;
+        timeRegex.lastIndex = 0;
+        if (timeRegex.test(input)) {
+            document.getElementById(object).classList.remove("is-danger")
+            document.getElementById(object).classList.add("is-success")
+        } else {
+            document.getElementById(object).classList.remove("is-success")
+            document.getElementById(object).classList.add("is-danger")
+        }
+    }
+    function validateDuration(object) {
+        let input = document.getElementById(object).value;
+        durationRegex.lastIndex = 0;
+        if (durationRegex.test(input)) {
+            document.getElementById(object).classList.remove("is-danger")
+            document.getElementById(object).classList.add("is-success")
+        } else {
+            document.getElementById(object).classList.remove("is-success")
+            document.getElementById(object).classList.add("is-danger")
+        }
+    }
+
+    prepareVariables();
+</script>
+</html>

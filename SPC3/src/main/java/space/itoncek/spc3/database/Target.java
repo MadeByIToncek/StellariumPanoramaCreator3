@@ -3,9 +3,11 @@ package space.itoncek.spc3.database;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.json.JSONObject;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Getter
@@ -59,7 +61,23 @@ public class Target {
 		return t;
 	}
 
-
+	public JSONObject toJSON() {
+		return switch (type) {
+			case AzAlt -> new JSONObject()
+					.put("uuid", uuid)
+					.put("type",type)
+					.put("az",az)
+					.put("alt",alt)
+					.put("date", date.format(DateTimeFormatter.ISO_DATE))
+					.put("time", time.format(DateTimeFormatter.ISO_TIME));
+			case Object -> new JSONObject()
+					.put("uuid", uuid)
+					.put("type",type)
+					.put("name",name)
+					.put("date", date.format(DateTimeFormatter.ISO_DATE))
+					.put("time", time.format(DateTimeFormatter.ISO_TIME));
+		};
+	}
 
 	public enum TargetType {
 		AzAlt,
