@@ -4,8 +4,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <!--suppress HtmlUnknownTarget -->
-    <link href="internal/bulma.css" rel="stylesheet">
+    <link href="/internal/bulma.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&display=block" rel="stylesheet"/>
     <title></title>
 </head>
@@ -26,13 +25,13 @@
             <div class="field">
                 <label class="label">Stellarium address</label>
                 <div class="control has-icons-left has-icons-right">
-                    <input class="input" type="text">
+                    <input class="input" type="text" id="stellariumAddress" placeholder="http://[::1]:8090">
                     <span class="icon is-small is-left">
 						<span class="material-symbols-rounded">lan</span>
 					</span>
                 </div>
             </div>
-            <button onclick="updateValues()" class="button is-primary" enabled="true">Update</button>
+            <button onclick="updateValues()" class="button is-primary" id="update-button">Update</button>
         </div>
         <div class="cell"></div>
 
@@ -42,28 +41,84 @@
                 <progress class="progress is-info" max="100">45%</progress>
             </div>
         </div>
-        <div class="cell"></div>
-        <div class="cell box">
-            <a href="https://bulma.io">
-                <img
-                        alt="Made with Bulma"
-                        height="24"
-                        src="https://bulma.io/assets/images/made-with-bulma.png"
-                        width="128">
-            </a>
-        </div>
     </div>
 </div>
 </body>
 
+<script src="/internal/commons.js" async></script>
 <script>
-    const unreachableError = "\n" +
+    const unreachableError = "" +
         "            <div class=\"notification is-danger\">\n" +
-        "                Unable to reach Stellarium instance!\n" +
+        "                Unable to reach Stellarium instance! <br>Reason: {0}\n" +
         "            </div>"
+    const connected = "" +
+        "            <div class=\"notification is-success\">\n" +
+        "                {0}<br>\n" +
+        "                Connection established successfuly!\n"+
+        "            </div>"
+    const loading = "<progress class=\"progress is-info\" max=\"100\">45%</progress>"
 
     function updateValues() {
+        saveValues()
+        reloadValues()
+        refreshStatus()
+    }
+
+    function saveValues() {
 
     }
+
+    function saveDefaultValues() {
+        const barrier = new CountdownLatch(1);
+        httpPutAsync("/api/keystore/STELLARIUM_URL", "http://[::1]:8090", (res,status) => {
+            if(status === 200) {
+                barrier.countDown();
+            }
+        })
+
+        barrier.await(()=> reloadValues())
+    }
+
+    function disableInput() {
+        document.getElementById("update-button").classList.add("is-loading")
+        document.getElementById("stellariumAddress").disabled = true;
+    }
+
+    function enableInput() {
+        document.getElementById("update-button").classList.remove("is-loading")
+        document.getElementById("stellariumAddress").disabled = false;
+    }
+
+    function reloadValues() {
+        const barrier = new CountdownLatch(1);
+        disableInput();
+        httpGetAsync("/api/keystore/STELLARIUM_URL", (res,status) => {
+            const body = JSON.parse(res);
+            if(status !== 200) {
+                console.log("Status")
+                saveDefaultValues();
+            } else {
+                document.getElementById("stellariumAddress").value = body.value
+                barrier.countDown();
+            }
+        })
+        barrier.await(()=> {
+            enableInput()
+        })
+    }
+
+    function refreshStatus() {
+        httpGetAsync("/api/stellarium/status",(res,status)=> {
+            if(status !== 200) {
+                console.log(status)
+                document.getElementById("status-box").innerHTML = format(unreachableError, JSON.parse(res).result);
+            } else {
+                document.getElementById("status-box").innerHTML = format(connected, JSON.parse(res).result);
+            }
+        })
+    }
+
+    reloadValues()
+    refreshStatus()
 </script>
 </html>

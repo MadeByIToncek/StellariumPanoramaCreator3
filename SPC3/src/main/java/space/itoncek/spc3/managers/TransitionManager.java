@@ -19,14 +19,16 @@ import space.itoncek.spc3.StellariumPanoramaCreator3;
 import space.itoncek.spc3.database.SlideTrackTransition;
 import space.itoncek.spc3.database.StartEndTransition;
 import space.itoncek.spc3.database.Target;
+import space.itoncek.spc3.generics.Manager;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 
 @Slf4j
-public class TransitionManager {
+public class TransitionManager implements Manager {
 	private final StellariumPanoramaCreator3 spc3;
 
 	public TransitionManager(StellariumPanoramaCreator3 spc3) {
@@ -150,5 +152,10 @@ public class TransitionManager {
 			patch("transition", this::updateTransition);
 			delete("transition", this::deleteTransition);
 		});
+	}
+
+	@Override
+	public void close() throws IOException {
+
 	}
 }

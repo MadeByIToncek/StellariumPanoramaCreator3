@@ -6,6 +6,7 @@ import static io.javalin.apibuilder.ApiBuilder.*;
 import io.javalin.http.ContentType;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.hibernate.SessionFactory;
 import org.hibernate.jpa.HibernatePersistenceConfiguration;
@@ -14,6 +15,8 @@ import space.itoncek.spc3.database.KeyStore;
 import space.itoncek.spc3.database.SlideTrackTransition;
 import space.itoncek.spc3.database.StartEndTransition;
 import space.itoncek.spc3.database.Target;
+import space.itoncek.spc3.generics.Manager;
+import space.itoncek.spc3.managers.KeyStoreManager;
 import space.itoncek.spc3.managers.StellariumCommsManager;
 import space.itoncek.spc3.managers.TransitionManager;
 
@@ -22,10 +25,11 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.Objects;
 
+@Slf4j
 public class StellariumPanoramaCreator3 implements Closeable {
 	private final Javalin server;
 	public final SessionFactory sf;
-	private final StellariumCommsManager scm;
+	private final Manager[] managers;
 
 	public StellariumPanoramaCreator3() {
 		sf = new HibernatePersistenceConfiguration("CVSS")
@@ -45,29 +49,35 @@ public class StellariumPanoramaCreator3 implements Closeable {
 				.showSql(true, false, true)
 				.createEntityManagerFactory();
 
-		TransitionManager tm = new TransitionManager(this);
-		scm = new StellariumCommsManager(this);
+		managers = new Manager[]{
+				new TransitionManager(this),
+				new StellariumCommsManager(this),
+				new KeyStoreManager(this)
+		};
 
-		server = Javalin.create(cfg -> {
-					cfg.router.apiBuilder(() -> {
-						get("/", ctx -> {
-							ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);
-							asResourceStream(ctx,"/static/index.html");
-						});
-						get("/config", ctx -> {
-							ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);
-							asResourceStream(ctx,"/static/config.html");
-						});
-						get("/internal/bulma.css", ctx -> {
-							ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_CSS);
-							asResourceStream(ctx,"/static/internals/bulma.min.css");
-						});
-						path("api", () -> {
-							tm.registerPaths();
-							scm.registerPaths();
-						});
-					});
-				});
+		server = Javalin.create(cfg -> cfg.router.apiBuilder(() -> {
+			get("/", ctx -> {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);
+				asResourceStream(ctx, "/static/index.html");
+			});
+			get("/config", ctx -> {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_HTML);
+				asResourceStream(ctx, "/static/config.html");
+			});
+			get("/internal/bulma.min.css", ctx -> {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_CSS);
+				asResourceStream(ctx, "/static/internal/bulma.min.css");
+			});
+			get("/internal/commons.js", ctx -> {
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_JS);
+				asResourceStream(ctx, "/static/internal/commons.js");
+			});
+			path("api", () -> {
+				for (Manager m : managers) {
+					m.registerPaths();
+				}
+			});
+		}));
 	}
 
 	private void asResourceStream(Context ctx, String path) throws IOException {
@@ -89,8 +99,14 @@ public class StellariumPanoramaCreator3 implements Closeable {
 
 	@Override
 	public void close() {
-		server.stop();
-		scm.close();
-		sf.close();
+		try {
+			server.stop();
+			for (Manager m : managers) {
+				m.close();
+			}
+			sf.close();
+		} catch (IOException e) {
+			log.error("Unable to cleanly shutdown!", e);
+		}
 	}
 }

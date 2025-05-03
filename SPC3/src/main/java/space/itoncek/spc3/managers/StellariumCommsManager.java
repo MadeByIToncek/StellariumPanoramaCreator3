@@ -8,17 +8,17 @@ import io.javalin.http.HttpStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
-import space.itoncek.stellarium.api.StellariumAPI;
 import space.itoncek.spc3.StellariumPanoramaCreator3;
 import space.itoncek.spc3.database.KeyStore;
+import space.itoncek.spc3.generics.Manager;
+import space.itoncek.stellarium.api.StellariumAPI;
 import space.itoncek.stellarium.api.objects.StatusResponse;
 
-import java.io.Closeable;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
-public class StellariumCommsManager implements Closeable {
+public class StellariumCommsManager implements Manager {
 	private final StellariumPanoramaCreator3 spc3;
 	private StellariumAPI api;
 	ReentrantLock lock = new ReentrantLock();

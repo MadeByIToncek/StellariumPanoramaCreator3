@@ -3,8 +3,7 @@
     <head>
         <meta charset="utf-8"/>
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <!--suppress HtmlUnknownTarget -->
-        <link rel="stylesheet" href="internal/bulma.css">
+        <link rel="stylesheet" href="/internal/bulma.min.css">
         <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&display=block" rel="stylesheet"/>
         <title>StellariumPanoramaCreator3</title>
     </head>
@@ -53,6 +52,7 @@
         </div>
     </body>
 
+    <script src="/internal/commons.js" async></script>
     <script>
         let template = "<tr>\n" +
         "    <th>\n" +
@@ -115,12 +115,6 @@
             })
         }
 
-        function format(str, ...values) {
-            return str.replace(/{(\d+)}/g, function(match, index) {
-                return typeof values[index] !== 'undefined' ? values[index] : match;
-            });
-        }
-
         function updateTable() {
             let tbody = document.getElementById("body");
             tbody.innerHTML = "";
@@ -142,36 +136,6 @@
                     tbody.innerHTML += html;
                 })
             })
-        }
-
-        function httpGetAsync(theUrl, callback) {
-            const xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState === 4)
-                    callback(xmlHttp.responseText,xmlHttp.status);
-            }
-            xmlHttp.open("GET", theUrl, true); // true for asynchronous
-            xmlHttp.send(null);
-        }
-
-        function httpDeleteAsync(url, body, callback) {
-            const xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState === 4)
-                    callback(xmlHttp.responseText,xmlHttp.status);
-            }
-            xmlHttp.open("DELETE", url, true); // true for asynchronous
-            xmlHttp.send(body);
-        }
-
-        function httpPutAsync(url, body, callback) {
-            const xmlHttp = new XMLHttpRequest();
-            xmlHttp.onreadystatechange = function () {
-                if (xmlHttp.readyState === 4)
-                    callback(xmlHttp.responseText,xmlHttp.status);
-            }
-            xmlHttp.open("PUT", url, true); // true for asynchronous
-            xmlHttp.send(body);
         }
 
         updateTable();
