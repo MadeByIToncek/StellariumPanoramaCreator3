@@ -44,7 +44,6 @@ public class StellariumPanoramaCreator3 implements Closeable {
 				.managedClass(SlideTrackTransition.class)
 				.managedClass(StartEndTransition.class)
 				.managedClass(Target.class)
-				.jdbcPoolSize(16)
 				// PostgreSQL
 				.jdbcUrl("jdbc:h2:./spc3;AUTO_SERVER=TRUE")
 				// Credentials
