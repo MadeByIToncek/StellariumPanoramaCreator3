@@ -55,10 +55,6 @@ public class TransitionManager implements Manager {
 		});
 	}
 
-	public void getTransition(@NotNull Context ctx) {
-
-	}
-
 	public void createTransition(@NotNull Context ctx) {
 		JSONObject obj = new JSONObject(ctx.body());
 		if (!obj.has("type")) {
@@ -93,10 +89,6 @@ public class TransitionManager implements Manager {
 				}
 			}
 		});
-	}
-
-	public void updateTransition(@NotNull Context ctx) {
-
 	}
 
 	public void deleteTransition(@NotNull Context ctx) {
@@ -147,9 +139,7 @@ public class TransitionManager implements Manager {
 	public void registerPaths() {
 		path("transitions", ()-> {
 			get("list", this::listAll);
-			get("transition",this::getTransition);
 			put("transition",this::createTransition);
-			patch("transition", this::updateTransition);
 			delete("transition", this::deleteTransition);
 		});
 	}

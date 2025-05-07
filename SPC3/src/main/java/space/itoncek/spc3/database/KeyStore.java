@@ -12,21 +12,21 @@ public class KeyStore {
 	@Id
 	@Enumerated(EnumType.STRING)
 	@Basic(fetch = FetchType.LAZY)
-	public KeystoreKeys key;
+	public KeystoreKeys kkey;
 	@Basic(fetch = FetchType.LAZY)
-	public String value;
+	public String kvalue;
 
 	public static KeyStore generateKeystore(KeystoreKeys key, String value) {
 		KeyStore ks = new KeyStore();
-		ks.key = key;
-		ks.value = value;
+		ks.kkey = key;
+		ks.kvalue = value;
 		return ks;
 	}
 
 	public JSONObject toJSON() {
 		return new JSONObject()
-				.put("key", key)
-				.put("value", value);
+				.put("key", kkey)
+				.put("value", kvalue);
 	}
 
 	public enum KeystoreKeys {

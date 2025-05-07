@@ -39,7 +39,7 @@ public class KeyStoreManager implements Manager {
 
 			spc3.sf.runInTransaction(em -> {
 				KeyStore kv = em.find(KeyStore.class, ks);
-				kv.setValue(body);
+				kv.setKvalue(body);
 				ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("result","ok").toString(4));
 			});
 		} catch (IllegalArgumentException e) {

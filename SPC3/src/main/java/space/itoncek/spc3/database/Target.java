@@ -34,6 +34,8 @@ public class Target {
 
 	//For All
 	@Basic(fetch = FetchType.LAZY)
+	float zoom;
+	@Basic(fetch = FetchType.LAZY)
 	LocalDate date;
 	@Basic(fetch = FetchType.LAZY)
 	LocalTime time;
@@ -43,7 +45,10 @@ public class Target {
 		t.setType(TargetType.Object);
 
 		t.setName(name);
+		t.setAz(270);
+		t.setAlt(15);
 
+		t.setZoom(120);
 		t.setDate(date);
 		t.setTime(time);
 		return t;
@@ -51,11 +56,13 @@ public class Target {
 
 	public static Target generateAzAltTarget(float az, float alt, LocalDate date, LocalTime time) {
 		Target t = new Target();
-		t.setType(TargetType.Object);
+		t.setType(TargetType.AzAlt);
 
+		t.setName("Mars");
 		t.setAz(az);
 		t.setAlt(alt);
 
+		t.setZoom(120);
 		t.setDate(date);
 		t.setTime(time);
 		return t;
@@ -65,15 +72,17 @@ public class Target {
 		return switch (type) {
 			case AzAlt -> new JSONObject()
 					.put("uuid", uuid)
-					.put("type",type)
-					.put("az",az)
-					.put("alt",alt)
+					.put("type", type)
+					.put("az", az)
+					.put("alt", alt)
+					.put("zoom", zoom)
 					.put("date", date.format(DateTimeFormatter.ISO_DATE))
 					.put("time", time.format(DateTimeFormatter.ISO_TIME));
 			case Object -> new JSONObject()
 					.put("uuid", uuid)
-					.put("type",type)
-					.put("name",name)
+					.put("type", type)
+					.put("name", name)
+					.put("zoom", zoom)
 					.put("date", date.format(DateTimeFormatter.ISO_DATE))
 					.put("time", time.format(DateTimeFormatter.ISO_TIME));
 		};

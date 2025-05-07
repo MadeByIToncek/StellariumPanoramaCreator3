@@ -8,6 +8,7 @@ import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.h2.tools.Server;
 import org.hibernate.SessionFactory;
 import org.hibernate.jpa.HibernatePersistenceConfiguration;
 import org.hibernate.tool.schema.Action;
@@ -24,8 +25,12 @@ import space.itoncek.spc3.managers.TransitionManager;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class StellariumPanoramaCreator3 implements Closeable {
@@ -39,12 +44,12 @@ public class StellariumPanoramaCreator3 implements Closeable {
 				.managedClass(SlideTrackTransition.class)
 				.managedClass(StartEndTransition.class)
 				.managedClass(Target.class)
-				.jdbcPoolSize(64)
+				.jdbcPoolSize(16)
 				// PostgreSQL
-				.jdbcUrl(System.getenv("PG_URL") == null ? "jdbc:postgresql://postgres:5432/spc3" : System.getenv("PG_URL"))
+				.jdbcUrl("jdbc:h2:./spc3;AUTO_SERVER=TRUE")
 				// Credentials
-				.jdbcUsername(System.getenv("PG_USR") == null ? "cvss" : System.getenv("PG_USR"))
-				.jdbcPassword(System.getenv("PG_PWD") == null ? "cvss" : System.getenv("PG_PWD"))
+				.jdbcUsername("sa")
+				.jdbcPassword("")
 				// Automatic schema export
 				.schemaToolingAction(Action.UPDATE)
 				// SQL statement logging
@@ -105,6 +110,14 @@ public class StellariumPanoramaCreator3 implements Closeable {
 				for (Manager m : managers) {
 					m.registerPaths();
 				}
+				post("/shutdown", ctx -> {
+					ctx.result("ok");
+					ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
+					ses.schedule(()-> {
+						ses.shutdown();
+						System.exit(0);
+					},250, TimeUnit.MILLISECONDS);
+				});
 			});
 		}));
 	}

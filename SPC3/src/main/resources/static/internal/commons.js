@@ -28,6 +28,26 @@ function httpPutAsync(url, body, callback) {
     xmlHttp.send(body);
 }
 
+function httpPatchAsync(url, body, callback) {
+    const xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function () {
+        if (xmlHttp.readyState === 4)
+            callback(xmlHttp.responseText,xmlHttp.status);
+    }
+    xmlHttp.open("PATCH", url, true); // true for asynchronous
+    xmlHttp.send(body);
+}
+
+function httpPostAsync(url, body, callback) {
+    const xmlHttp = new XMLHttpRequest();
+    xmlHttp.onreadystatechange = function () {
+        if (xmlHttp.readyState === 4)
+            callback(xmlHttp.responseText,xmlHttp.status);
+    }
+    xmlHttp.open("POST", url, true); // true for asynchronous
+    xmlHttp.send(body);
+}
+
 function format(str, ...values) {
     return str.replace(/{(\d+)}/g, function(match, index) {
         return typeof values[index] !== 'undefined' ? values[index] : match;

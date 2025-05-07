@@ -17,6 +17,8 @@ public class StartEndTransition {
 	UUID uuid;
 	@Basic(fetch = FetchType.LAZY)
 	String name;
+	@Basic(fetch = FetchType.LAZY)
+	int duration;
 
 	@ManyToOne(targetEntity = Target.class, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	Target start;
@@ -28,12 +30,14 @@ public class StartEndTransition {
 		StartEndTransition set = new StartEndTransition();
 		set.setStart(start);
 		set.setEnd(end);
+		set.setDuration(10);
 		return set;
 	}
 
 	public JSONObject toSimpleJson() {
 		return new JSONObject()
 				.put("uuid",uuid)
-				.put("name",name);
+				.put("name",name)
+				.put("duration",duration);
 	}
 }

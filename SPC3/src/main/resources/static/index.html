@@ -43,6 +43,12 @@
                         </span>
                         <span>System Config</span>
                     </button>
+                    <button onclick="shutdown()" class="button">
+                        <span class="icon">
+                            <span class="material-symbols-rounded">power_settings_new</span>
+                        </span>
+                        <span>Shutdown</span>
+                    </button>
                 </div>
                 <div class="cell"></div>
                 <div id="notif">
@@ -78,6 +84,14 @@
                 result = "Undefined error!";
             }
             tbody.innerHTML = format(notifTemplate,"is-danger",result);
+        }
+
+        function success(result) {
+            let tbody = document.getElementById("notif");
+            if(result == null) {
+                result = "Undefined success!";
+            }
+            tbody.innerHTML = format(notifTemplate,"is-success",result);
         }
 
         function createEntry() {
@@ -138,6 +152,13 @@
                 })
             })
         }
+
+        function shutdown() {
+            httpPostAsync("/api/shutdown","",(res, status) => {
+                success("Application has been shutdown!")
+            })
+        }
+
         updateTable()
     </script>
 </html>

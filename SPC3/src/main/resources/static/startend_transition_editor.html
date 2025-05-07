@@ -24,71 +24,16 @@
                 <div></div>
                 <div></div>
                 <div></div>
+                <div></div>
             </div>
         </div>
-        <div class="column box" style="margin: 16px">
-<!--            <div class="skeleton-lines">-->
-<!--                <div></div>-->
-<!--                <div></div>-->
-<!--                <div></div>-->
-<!--                <div></div>-->
-<!--                <div></div>-->
-<!--                <div></div>-->
-<!--            </div>-->
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-            <div class="field">
-                <label class="label">Name</label>
-                <div class="control">
-                    <input class="input" type="text" id="name" placeholder="Text input">
-                </div>
+        <div class="column box" style="margin: 16px" id="centerbox">
+            <div class="skeleton-lines">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
             </div>
-            <div class="field">
-                <label class="label">Duration</label>
-                <div class="control">
-                    <input class="input" type="text" id="duration" placeholder="Text input" oninput='validateDuration("duration")'></div>
-            </div>
-
-            <div class="field has-addons">
-                <p class="control">
-                    <button class="button" onclick="saveCore()">
-                        <span class="icon is-small">
-                            <span class="material-symbols-rounded">save</span>
-                        </span>
-                        <span>Save</span>
-                    </button>
-                </p>
-                <p class="control">
-                    <button class="button" onclick="preview()">
-                        <span class="icon is-small">
-                            <span class="material-symbols-rounded">preview</span>
-                        </span>
-                        <span>Preview</span>
-                    </button>
-                </p>
-                <p class="control">
-                    <button class="button" onclick="render()">
-                        <span class="icon is-small">
-                            <span class="material-symbols-rounded">blender</span>
-                        </span>
-                        <span>Render</span>
-                    </button>
-                </p>
-            </div>
-
-            <div id="notif"><!-- Notifications appear here!--> </div>
         </div>
         <div class="column box" style="margin: 16px" id="endbox">
             <div class="skeleton-lines">
@@ -105,11 +50,11 @@
     const uuid = window.location.pathname.split("/")[2];
     let startTarget = {};
     let endTarget = {};
+    let meta = {};
 
     const dateRegex = /^([0-9]{4})(-?)(1[0-2]|0[1-9])\2(3[01]|0[1-9]|[12][0-9])$/gm;
     const timeRegex = /^(2[0-3]|[01][0-9]):?([0-5][0-9]):?([0-5][0-9])$/gm;
     const durationRegex = /^([0-5][0-9]):?([0-5][0-9])$/gm;
-
 
     const Object = "" +
         "<div class=\"field\">\n" +
@@ -130,20 +75,26 @@
         "    </div>\n" +
         "</div>\n" +
         "<div class=\"field\">\n" +
+        "    <label class=\"label\">Zoom</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"number\" id=\"{0}-zoom\" placeholder=\"120.9616\" value=\"{4}\">\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
         "    <label class=\"label\">Date</label>\n" +
         "    <div class=\"control\">\n" +
-        "        <input class=\"input\" type=\"text\" id=\"{0}-date\" placeholder=\"1970-01-01\" value=\"{2}\" oninput='validateDate(\"{0}-date\")'>\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-date\" placeholder=\"1970-01-01\" value=\"{2}\" oninput='validateAll()'>\n" +
         "    </div>\n" +
         "</div>\n" +
         "<div class=\"field\">\n" +
         "    <label class=\"label\">Time</label>\n" +
         "    <div class=\"control\">\n" +
-        "        <input class=\"input\" type=\"text\" id=\"{0}-time\" placeholder=\"00:00\" value=\"{3}\" oninput='validateTime(\"{0}-time\")'>\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-time\" placeholder=\"00:00\" value=\"{3}\" oninput='validateAll()'>\n" +
         "    </div>\n" +
         "</div>\n" +
         "<div class=\"field has-addons\">\n" +
         "    <p class=\"control\">\n" +
-        "        <button class=\"button\" onclick=\"{0}RetargetObjectStellarium()\">\n" +
+        "        <button class=\"button\" id=\"{0}-retarget\" onclick=\"{0}RetargetObjectStellarium()\">\n" +
         "            <span class=\"icon is-small\">\n" +
         "                <span class=\"material-symbols-rounded\">my_location</span>\n" +
         "            </span>\n" +
@@ -151,19 +102,11 @@
         "        </button>\n" +
         "    </p>\n" +
         "    <p class=\"control\">\n" +
-        "        <button class=\"button\" onclick=\"{0}CopyObjectCurrent()\">\n" +
+        "        <button class=\"button\" id=\"{0}-copy\" onclick=\"{0}CopyObjectCurrent()\">\n" +
         "            <span class=\"icon is-small\">\n" +
         "                <span class=\"material-symbols-rounded\">content_copy</span>\n" +
         "            </span>\n" +
         "            <span>Copy current</span>\n" +
-        "        </button>\n" +
-        "    </p>\n" +
-        "    <p class=\"control\">\n" +
-        "        <button class=\"button\" onclick=\"{0}SaveObject()\">\n" +
-        "            <span class=\"icon is-small\">\n" +
-        "                <span class=\"material-symbols-rounded\">save</span>\n" +
-        "            </span>\n" +
-        "            <span>Save</span>\n" +
         "        </button>\n" +
         "    </p>\n" +
         "</div>";
@@ -193,20 +136,26 @@
         "    </div>\n" +
         "</div>\n" +
         "<div class=\"field\">\n" +
+        "    <label class=\"label\">Zoom</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"number\" id=\"{0}-zoom\" placeholder=\"120.9616\" value=\"{5}\">\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
         "    <label class=\"label\">Date</label>\n" +
         "    <div class=\"control\">\n" +
-        "        <input class=\"input\" type=\"text\" id=\"{0}-date\" placeholder=\"1970-01-01\" value=\"{3}\" oninput='validateDate(\"{0}-date\")'>\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-date\" placeholder=\"1970-01-01\" value=\"{3}\" oninput='validateAll()'>\n" +
         "    </div>\n" +
         "</div>\n" +
         "<div class=\"field\">\n" +
         "    <label class=\"label\">Time</label>\n" +
         "    <div class=\"control\">\n" +
-        "        <input class=\"input\" type=\"text\" id=\"{0}-time\" placeholder=\"00:00:00\" value=\"{4}\" oninput='validateTime(\"{0}-time\")'>\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-time\" placeholder=\"00:00:00\" value=\"{4}\" oninput='validateAll()'>\n" +
         "    </div>\n" +
         "</div>\n" +
         "<div class=\"field has-addons\">\n" +
         "    <p class=\"control\">\n" +
-        "        <button class=\"button\" onclick=\"{0}RetargetStellarium()\">\n" +
+        "        <button class=\"button\" id=\"{0}-retarget\" onclick=\"{0}RetargetStellarium()\">\n" +
         "            <span class=\"icon is-small\">\n" +
         "                <span class=\"material-symbols-rounded\">my_location</span>\n" +
         "            </span>\n" +
@@ -214,30 +163,62 @@
         "        </button>\n" +
         "    </p>\n" +
         "    <p class=\"control\">\n" +
-        "        <button class=\"button\" onclick=\"{0}CopyCurrent()\">\n" +
+        "        <button class=\"button\" id=\"{0}-copy\" onclick=\"{0}CopyCurrent()\">\n" +
         "            <span class=\"icon is-small\">\n" +
         "                <span class=\"material-symbols-rounded\">content_copy</span>\n" +
         "            </span>\n" +
         "            <span>Copy current</span>\n" +
         "        </button>\n" +
         "    </p>\n" +
+        "</div>";
+
+    const Center = "" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Name</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"name\" placeholder=\"Text input\" value='{0}'>\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Duration</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"duration\" placeholder=\"Text input\" oninput='validateAll()' value='{1}'></div>\n" +
+        "</div>\n" +
+        "<div class=\"field has-addons\">\n" +
         "    <p class=\"control\">\n" +
-        "        <button class=\"button\" onclick=\"{0}Save()\">\n" +
+        "        <button class=\"button\" id=\"save\" onclick=\"save()\">\n" +
         "            <span class=\"icon is-small\">\n" +
         "                <span class=\"material-symbols-rounded\">save</span>\n" +
         "            </span>\n" +
         "            <span>Save</span>\n" +
         "        </button>\n" +
         "    </p>\n" +
-        "</div>";
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" id=\"preview\" onclick=\"preview()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">preview</span>\n" +
+        "            </span>\n" +
+        "            <span>Preview</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" id=\"render\" onclick=\"render()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">blender</span>\n" +
+        "            </span>\n" +
+        "            <span>Render</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "</div>\n" +
+        "<div id=\"notif\"><!-- Notifications appear here!--> </div>"
 
     let notifTemplate = "<div class=\"notification {0}\">\n" +
         "    <button class=\"delete\" onclick='clearNotification()'></button>\n" +
         "    {1}\n" +
         "</div>"
 
-    function prepareVariables() {
-        const latch = new CountdownLatch(2);
+    function updateVariables() {
+        const latch = new CountdownLatch(3);
         let failed = false;
         httpGetAsync("/api/setm/" + uuid + "/start", (res, status) => {
             if(status !== 200) {
@@ -259,6 +240,16 @@
             endTarget = JSON.parse(res);
             latch.countDown();
         })
+        httpGetAsync("/api/setm/" + uuid + "/meta", (res, status) => {
+            if(status !== 200) {
+                error("Unable to get meta! \n" + JSON.parse(res).error)
+                latch.countDown()
+                failed = true;
+                return
+            }
+            meta = JSON.parse(res);
+            latch.countDown();
+        })
         latch.await(()=> {
             if(!failed) constructUI();
         })
@@ -266,23 +257,40 @@
 
     function constructUI() {
         if(startTarget.type === "Object") {
-            document.getElementById("startbox").innerHTML = format(Object, "start", startTarget.name, startTarget.date, startTarget.time)
+            document.getElementById("startbox").innerHTML = format(Object, "start", startTarget.name, startTarget.date, startTarget.time, startTarget.zoom)
         } else if(startTarget.type === "AzAlt"){
-            document.getElementById("startbox").innerHTML = format(AzAlt, "start", startTarget.az, startTarget.alt, startTarget.date, startTarget.time)
+            document.getElementById("startbox").innerHTML = format(AzAlt, "start", startTarget.az, startTarget.alt, startTarget.date, startTarget.time, startTarget.zoom)
         }
         document.getElementById("start-mode").value = startTarget.type;
 
         if(endTarget.type === "Object") {
-            document.getElementById("endbox").innerHTML = format(Object, "end", endTarget.name, endTarget.date, endTarget.time)
+            document.getElementById("endbox").innerHTML = format(Object, "end", endTarget.name, endTarget.date, endTarget.time, endTarget.zoom)
         } else if(endTarget.type === "AzAlt"){
-            document.getElementById("endbox").innerHTML = format(AzAlt, "end", endTarget.az, endTarget.alt, endTarget.date, endTarget.time)
+            document.getElementById("endbox").innerHTML = format(AzAlt, "end", endTarget.az, endTarget.alt, endTarget.date, endTarget.time, endTarget.zoom)
         }
-        document.getElementById("end-mode").value = startTarget.type;
+        document.getElementById("end-mode").value = endTarget.type;
 
-        validateTime("start-time")
-        validateDate("start-date")
-        validateTime("end-time")
-        validateDate("end-date")
+        if(meta.name == null) {
+            meta.name = "";
+        }
+
+        document.getElementById("centerbox").innerHTML = format(Center, meta.name, toDisplay(meta.duration))
+
+        validateAll();
+    }
+
+    function toDisplay(totalseconds) {
+        let minutes = Math.floor(totalseconds / 60);
+        let seconds = Math.floor(totalseconds - minutes * 60);
+
+        return ("" + minutes).padStart(2, "0") + ":" + ("" + seconds).padStart(2, "0");
+    }
+
+    function fromDisplay(string) {
+        let minutes = parseInt(string.split(":")[0]);
+        let seconds = parseInt(string.split(":")[1]);
+
+        return minutes*60 + seconds;
     }
 
     function clearNotification() {
@@ -293,73 +301,237 @@
     function error(result) {
         let tbody = document.getElementById("notif");
         if(result == null) {
-            result = "Undefined error!";
+            tbody.innerHTML = format(notifTemplate,"is-danger","Undefined error!");
         }
         tbody.innerHTML = format(notifTemplate,"is-danger",result);
     }
 
-    function updateMode(target) {
+    function success(result) {
+        let tbody = document.getElementById("notif");
+        if(result == null) {
+            tbody.innerHTML = format(notifTemplate,"is-success","Undefined success!");
+        }
+        tbody.innerHTML = format(notifTemplate,"is-success",result);
+    }
 
+    function updateMode(target) {
+        let mode;
+        if(target === "start") {
+            mode = document.getElementById("start-mode").value
+        } else if(target === "end") {
+            mode = document.getElementById("end-mode").value
+        }
+
+        let cdl = new CountdownLatch(1);
+        httpPatchAsync("/api/setm/" + uuid + "/" + target + "/mode", mode, (res, status) => {
+            cdl.countDown();
+        })
+        cdl.await(()=> {
+            updateVariables();
+        })
     }
 
     function startRetargetStellarium() {
-
+        save();
+        setTimeout(function() {
+            sendRequest("/api/stellarium/retarget","start")
+        }, 50);
     }
 
     function endRetargetStellarium(){
-
+        save();
+        setTimeout(function() {
+            sendRequest("/api/stellarium/retarget","end")
+        }, 50);
     }
 
     function startCopyCurrent() {
-
+        save();
+        setTimeout(function() {
+            sendRequest("/api/stellarium/copyCurrent","start")
+            setTimeout(()=> {
+                updateVariables();
+            },250)
+        }, 50);
     }
 
     function endCopyCurrent(){
-
+        save();
+        setTimeout(function() {
+            sendRequest("/api/stellarium/copyCurrent","end")
+            setTimeout(()=> {
+                updateVariables();
+            },250)
+        }, 50);
     }
 
     function startRetargetObjectStellarium() {
-
+        save();
+        setTimeout(function() {
+            sendRequest("/api/stellarium/retargetObject","start")
+        }, 50);
     }
 
     function endRetargetObjectStellarium(){
-
+        save();
+        setTimeout(function() {
+            sendRequest("/api/stellarium/retargetObject","end")
+        }, 50);
     }
 
     function startCopyObjectCurrent() {
-
+        save();
+        setTimeout(function() {
+            sendRequest("/api/stellarium/copyCurrentObject","start")
+            setTimeout(()=> {
+                updateVariables();
+            },250)
+        }, 50);
     }
 
     function endCopyObjectCurrent(){
-
+        save();
+        setTimeout(function() {
+            sendRequest("/api/stellarium/copyCurrentObject","end")
+            setTimeout(()=> {
+                updateVariables();
+            },250)
+        }, 50);
     }
 
-    function startSave() {
-
+    function sendRequest(url, param) {
+        httpPostAsync(url, JSON.stringify({
+            transition: uuid,
+            target: param
+        }), (res, status) => {
+            if(status === 200) {
+                success("Targeting!")
+                setTimeout(function() {clearNotification()}, 3000);
+            } else {
+                error("There has been an error while targeting Stellarium!")
+                setTimeout(function() {clearNotification()}, 3000);
+            }
+        })
     }
 
-    function endSave() {
+    function save() {
+        let start_object = document.getElementById("start-object");
+        let start_az = document.getElementById("start-azimuth");
+        let start_alt = document.getElementById("start-altitude");
+        let start_zoom = document.getElementById("start-zoom");
+        let start_time = document.getElementById("start-time");
+        let start_date = document.getElementById("start-date");
 
-    }
+        let end_object = document.getElementById("end-object");
+        let end_az = document.getElementById("end-azimuth");
+        let end_alt = document.getElementById("end-altitude");
+        let end_zoom = document.getElementById("end-zoom");
+        let end_time = document.getElementById("end-time");
+        let end_date = document.getElementById("end-date");
 
-    function startSaveObject() {
+        let name = document.getElementById("name");
+        let duration = document.getElementById("duration");
 
-    }
+        let startString = "";
+        if (startTarget.type === "Object") {
+            startString = JSON.stringify({
+                target: start_object.value,
+                zoom: parseFloat(start_zoom.value),
+                date: start_date.value,
+                time: start_time.value
+            })
+        } else if (startTarget.type === "AzAlt") {
+            startString = JSON.stringify({
+                az: parseFloat(start_az.value),
+                alt: parseFloat(start_alt.value),
+                zoom: parseFloat(start_zoom.value),
+                date: start_date.value,
+                time: start_time.value
+            })
+        }
+        let endString = "";
+        if (endTarget.type === "Object") {
+            endString = JSON.stringify({
+                target: end_object.value,
+                zoom: parseFloat(end_zoom.value),
+                date: end_date.value,
+                time: end_time.value
+            })
+        } else if (endTarget.type === "AzAlt") {
+            endString = JSON.stringify({
+                az: parseFloat(end_az.value),
+                alt: parseFloat(end_alt.value),
+                zoom: parseFloat(end_zoom.value),
+                date: end_date.value,
+                time: end_time.value
+            })
+        }
+        let metaString = JSON.stringify({
+            name: name.value,
+            duration: fromDisplay(duration.value)
+        })
 
-    function endSaveObject() {
+        let cdl = new CountdownLatch(3);
 
-    }
+        httpPatchAsync("/api/setm/" + uuid + "/start", startString, (res, status) => {
+            cdl.countDown();
+        })
+        httpPatchAsync("/api/setm/" + uuid + "/end", endString, (res, status) => {
+            cdl.countDown();
+        })
+        httpPatchAsync("/api/setm/" + uuid + "/meta", metaString, (res, status) => {
+            cdl.countDown();
+        })
 
-    function saveCore() {
-
+        cdl.await(() => {
+            updateVariables();
+        })
     }
 
     function preview() {
+        save();
+        setTimeout(function () {
+            httpPostAsync("/api/stellarium/preview", JSON.stringify({
+                transition: uuid
+            }), (res, status) => {
+                if (status === 200) {
+                    success("Targeting!")
+                    setTimeout(function () {
+                        updateVariables();
+                    }, 3000);
+                } else {
+                    error("There has been an error while targeting Stellarium!")
+                    setTimeout(function () {
+                        updateVariables();
+                    }, 3000);
+                }
 
+            })
+        }, 50);
     }
 
     function render() {
 
+    }
+
+    function validateAll() {
+        let valid = validateTime("start-time") && validateDate("start-date") && validateTime("end-time") && validateDate("end-date") && validateDuration("duration")
+        updateButtons(valid);
+    }
+
+    function updateButtons(isValid) {
+        let list = [
+            "start-retarget",
+            "end-retarget",
+            "start-copy",
+            "end-copy",
+            "save",
+            "preview",
+            "render"
+        ]
+        list.forEach(x => {
+            document.getElementById(x).disabled = !isValid;
+        })
     }
 
     function validateDate(object) {
@@ -368,9 +540,11 @@
         if (dateRegex.test(input)) {
             document.getElementById(object).classList.remove("is-danger")
             document.getElementById(object).classList.add("is-success")
+            return true;
         } else {
             document.getElementById(object).classList.remove("is-success")
             document.getElementById(object).classList.add("is-danger")
+            return false;
         }
     }
 
@@ -380,9 +554,11 @@
         if (timeRegex.test(input)) {
             document.getElementById(object).classList.remove("is-danger")
             document.getElementById(object).classList.add("is-success")
+            return true;
         } else {
             document.getElementById(object).classList.remove("is-success")
             document.getElementById(object).classList.add("is-danger")
+            return false;
         }
     }
     function validateDuration(object) {
@@ -391,12 +567,14 @@
         if (durationRegex.test(input)) {
             document.getElementById(object).classList.remove("is-danger")
             document.getElementById(object).classList.add("is-success")
+            return true;
         } else {
             document.getElementById(object).classList.remove("is-success")
             document.getElementById(object).classList.add("is-danger")
+            return false;
         }
     }
 
-    prepareVariables();
+    updateVariables();
 </script>
 </html>

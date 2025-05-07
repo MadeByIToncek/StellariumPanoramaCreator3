@@ -39,13 +39,11 @@ public record StatusResponse(Location location, String selectionInfo, Time time,
 		}
 
 		private static ZoneOffset getZoneOffset(String timeZone) {
-			System.out.println(timeZone);
 			// Compile regular expression
 			final Pattern pattern = Pattern.compile("UTC\\+(0?[0-9]|1[0-9]|2[0-3]):(0?[0-9]|[1-5][0-9])", Pattern.CASE_INSENSITIVE);
 			// Match regex against input
 			final Matcher matcher = pattern.matcher(timeZone);
 			// Use results...
-			System.out.println(matcher.groupCount());
 			matcher.find();
 			String hour = matcher.group(1);
 			String minute = matcher.group(2);

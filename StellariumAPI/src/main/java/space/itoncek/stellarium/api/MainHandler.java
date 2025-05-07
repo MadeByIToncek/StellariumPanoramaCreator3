@@ -1,6 +1,7 @@
 package space.itoncek.stellarium.api;
 
 import org.json.JSONObject;
+import space.itoncek.stellarium.api.objects.AltAz;
 import space.itoncek.stellarium.api.objects.StatusResponse;
 
 import java.io.Closeable;
@@ -35,5 +36,9 @@ public class MainHandler implements Closeable {
 				.uri(URI.create(url + path))
 				.build();
 		return client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+	}
+
+	public AltAz getAltAz() throws IOException, InterruptedException {
+		return AltAz.parse(new JSONObject(getString("/api/main/view?coord=altAz")));
 	}
 }
