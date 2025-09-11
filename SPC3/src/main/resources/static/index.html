@@ -1,164 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8"/>
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="/internal/bulma.min.css">
-        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&display=block" rel="stylesheet"/>
-        <title>StellariumPanoramaCreator3</title>
-    </head>
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <link href="/internal/bulma.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded&display=block" rel="stylesheet"/>
+    <title>StellariumPanoramaCreator3</title>
+</head>
 
-    <body style="margin: 16px">
-        <div class="fixed-grid">
-            <div class="grid">
-                <div class="cell box">
-                    <table class="table" onload="updateTable()">
-                        <thead>
-                        <th>
-                            <abbr title="Transition sequence id">UUID</abbr>
-                        </th>
-                        <th>Name</th>
-                        </thead>
-                        <tbody id="body">
-                        </tbody>
-                    </table>
-                    <div class="select">
-                        <select id="create-type">
-                            <option>Start-End Transition</option>
-                            <option>Slidetrack Transition</option>
-                        </select>
-                    </div>
-                    <button class="button is-outlined is-success" onclick="createEntry()">
+<body style="margin: 16px">
+<div class="columns">
+    <div class="column is-two-thirds">
+        <div class="box">
+            <table class="table" onload="updateTable()">
+                <thead>
+                <th>
+                    <abbr title="Transition sequence id">UUID</abbr>
+                </th>
+                <th>Name</th>
+                </thead>
+                <tbody id="body">
+                </tbody>
+            </table>
+            <div class="select">
+                <select id="create-type">
+                    <option>Start-End Transition</option>
+                    <option>Slidetrack Transition</option>
+                </select>
+            </div>
+            <button class="button is-outlined is-success" onclick="createEntry()">
                         <span class="icon is-small">
                             <span class="material-symbols-rounded">add</span>
                         </span>
-                        <span>Add</span>
-                    </button>
-                </div>
-                <div class="cell"></div>
-                <div class="cell box">
-                    <button onclick="window.location.href = '/config'" class="button">
+                <span>Add</span>
+            </button>
+        </div>
+        <div class="box">
+            <button class="button" onclick="window.location.href = '/config'">
                         <span class="icon">
                             <span class="material-symbols-rounded">settings</span>
                         </span>
-                        <span>System Config</span>
-                    </button>
-                    <button onclick="shutdown()" class="button">
+                <span>System Config</span>
+            </button>
+            <button class="button" onclick="shutdown()">
                         <span class="icon">
                             <span class="material-symbols-rounded">power_settings_new</span>
                         </span>
-                        <span>Shutdown</span>
-                    </button>
-                </div>
-                <div class="cell"></div>
-                <div id="notif">
-
-                </div>
-            </div>
+                <span>Shutdown</span>
+            </button>
         </div>
-    </body>
 
-    <script src="/internal/commons.js"></script>
-    <script>
-        let template = "<tr>\n" +
+        <div id="notif"></div>
+    </div>
+    <div class="column"></div>
+</div>
+</body>
+
+<script src="/internal/commons.js"></script>
+<script>
+    let template = "<tr>\n" +
         "    <th>\n" +
         "        <a href=\"/transition/{0}\">{0}</a>\n" +
         "    </th>\n" +
         "    <td>{1}</td>\n" +
-        "    <td><button class=\"button is-danger is-outlined\" onclick='deleteEntry(\"{0}\")'><span class=\"icon is-small\"> <span class=\"material-symbols-rounded\">delete</span> </span> </button></td>\n"+
+        "    <td><button class=\"button is-danger is-outlined\" onclick='deleteEntry(\"{0}\")'><span class=\"icon is-small\"> <span class=\"material-symbols-rounded\">delete</span> </span> </button></td>\n" +
         "</tr>"
 
-        let notifTemplate = "<div class=\"notification {0}\">\n" +
-            "    <button class=\"delete\" onclick='clearNotification()'></button>\n" +
-            "    {1}\n" +
-            "</div>"
+    let notifTemplate = "<div class=\"notification {0}\">\n" +
+        "    <button class=\"delete\" onclick='clearNotification()'></button>\n" +
+        "    {1}\n" +
+        "</div>"
 
-        function clearNotification() {
-            let tbody = document.getElementById("notif");
-            tbody.innerHTML = "";
+    function clearNotification() {
+        let tbody = document.getElementById("notif");
+        tbody.innerHTML = "";
+    }
+
+    function error(result) {
+        let tbody = document.getElementById("notif");
+        if (result == null) {
+            result = "Undefined error!";
         }
+        tbody.innerHTML = format(notifTemplate, "is-danger", result);
+    }
 
-        function error(result) {
-            let tbody = document.getElementById("notif");
-            if(result == null) {
-                result = "Undefined error!";
+    function success(result) {
+        let tbody = document.getElementById("notif");
+        if (result == null) {
+            result = "Undefined success!";
+        }
+        tbody.innerHTML = format(notifTemplate, "is-success", result);
+    }
+
+    function createEntry() {
+        let type = document.getElementById("create-type");
+        console.log(type.value)
+
+        let t;
+
+        switch (type.value) {
+            case "Slidetrack Transition":
+                t = "slidetrack";
+                break
+            case "Start-End Transition":
+            default:
+                t = "start-end"
+                break
+        }
+        httpPutAsync("/api/transitions/transition", JSON.stringify({type: t}), (res, status) => {
+            if (JSON.parse(res).result === "ok" && status === 200) {
+                updateTable()
+                clearNotification()
+            } else {
+                error(JSON.parse(res).result);
             }
-            tbody.innerHTML = format(notifTemplate,"is-danger",result);
-        }
+        })
+    }
 
-        function success(result) {
-            let tbody = document.getElementById("notif");
-            if(result == null) {
-                result = "Undefined success!";
+    function deleteEntry(entry) {
+        httpDeleteAsync("/api/transitions/transition", JSON.stringify({transition: entry}), (res, status) => {
+            if (JSON.parse(res).result === "ok" && status === 200) {
+                updateTable()
+            } else {
+                error(JSON.parse(res).result);
             }
-            tbody.innerHTML = format(notifTemplate,"is-success",result);
-        }
+        })
+    }
 
-        function createEntry() {
-            let type = document.getElementById("create-type");
-            console.log(type.value)
-
-            let t;
-
-            switch (type.value) {
-                case "Slidetrack Transition":
-                    t = "slidetrack";
-                    break
-                case "Start-End Transition":
-                default:
-                    t = "start-end"
-                    break
+    function updateTable() {
+        console.log("update!")
+        let tbody = document.getElementById("body");
+        tbody.innerHTML = "";
+        httpGetAsync("/api/transitions/list", (res, status) => {
+            if (status !== 200) {
+                error("Unable to parse the list from the server!")
+                return;
             }
-            httpPutAsync("/api/transitions/transition", JSON.stringify({type: t}),(res,status) => {
-                if(JSON.parse(res).result === "ok" && status === 200) {
-                    updateTable()
-                    clearNotification()
-                } else {
-                    error(JSON.parse(res).result);
+            let body = JSON.parse(res);
+            body.forEach(x => {
+                let uuid = x.uuid;
+                let name = x.name;
+
+                if (name == null) {
+                    name = "";
                 }
+
+                let html = format(template, uuid, name);
+                tbody.innerHTML += html;
             })
-        }
+        })
+    }
 
-        function deleteEntry(entry) {
-            httpDeleteAsync("/api/transitions/transition", JSON.stringify({transition: entry}), (res,status) => {
-                if(JSON.parse(res).result === "ok" && status === 200) {
-                    updateTable()
-                } else {
-                    error(JSON.parse(res).result);
-                }
-            })
-        }
+    function shutdown() {
+        httpPostAsync("/api/shutdown", "", (res, status) => {
+            success("Application has been shutdown!")
+        })
+    }
 
-        function updateTable() {
-            console.log("update!")
-            let tbody = document.getElementById("body");
-            tbody.innerHTML = "";
-            httpGetAsync("/api/transitions/list", (res,status) => {
-                if(status !== 200) {
-                    error("Unable to parse the list from the server!")
-                    return;
-                }
-                let body = JSON.parse(res);
-                body.forEach(x => {
-                    let uuid =  x.uuid;
-                    let name = x.name;
-
-                    if(name == null) {
-                        name = "";
-                    }
-
-                    let html = format(template,uuid,name);
-                    tbody.innerHTML += html;
-                })
-            })
-        }
-
-        function shutdown() {
-            httpPostAsync("/api/shutdown","",(res, status) => {
-                success("Application has been shutdown!")
-            })
-        }
-
-        updateTable()
-    </script>
+    updateTable()
+</script>
 </html>

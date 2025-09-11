@@ -11,9 +11,7 @@ import org.json.JSONObject;
 public class KeyStore {
 	@Id
 	@Enumerated(EnumType.STRING)
-	@Basic(fetch = FetchType.LAZY)
 	public KeystoreKeys kkey;
-	@Basic(fetch = FetchType.LAZY)
 	public String kvalue;
 
 	public static KeyStore generateKeystore(KeystoreKeys key, String value) {

@@ -67,11 +67,34 @@ public class StellariumCommsManager implements Manager {
 		path("stellarium", () -> {
 			get("status", this::getStatus);
 			post("preview", this::preview);
+			post("render", this::render);
 			post("retarget", this::retarget);
 			post("copyCurrent", this::copyCurrent);
 			post("retargetObject", this::retargetObject);
 			post("copyCurrentObject", this::copyCurrentObject);
 		});
+	}
+
+	private void render(@NotNull Context ctx) throws IOException, InterruptedException {
+		if (!api.getScriptHandler().status().isRunning()) {
+			JSONObject body = new JSONObject(ctx.body());
+			UUID startEndTransitionID = UUID.fromString(body.getString("transition"));
+			spc3.sf.runInTransaction(em -> {
+				StartEndTransition set = em.find(StartEndTransition.class, startEndTransitionID);
+				if (set == null) {
+					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Unable to find that transition").toString(4));
+					return;
+				}
+
+				try {
+					api.getScriptHandler().direct(SliderGenerator.generateScript(set, false));
+				} catch (IOException e) {
+					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Stellarium error").toString(4));
+				}
+			});
+		}else {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+		}
 	}
 
 	private void preview(@NotNull Context ctx) throws IOException, InterruptedException {

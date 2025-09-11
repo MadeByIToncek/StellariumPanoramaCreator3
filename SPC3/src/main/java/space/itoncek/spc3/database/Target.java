@@ -16,28 +16,20 @@ import java.util.UUID;
 public class Target {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
-	@Basic(fetch = FetchType.LAZY)
 	UUID uuid;
 	@Enumerated(value = EnumType.STRING)
-	@Basic(fetch = FetchType.LAZY)
 	TargetType type;
 
 	//For object targets
-	@Basic(fetch = FetchType.LAZY)
 	String name;
 
 	//For AzAlt targets
-	@Basic(fetch = FetchType.LAZY)
 	float az;
-	@Basic(fetch = FetchType.LAZY)
 	float alt;
 
 	//For All
-	@Basic(fetch = FetchType.LAZY)
 	float zoom;
-	@Basic(fetch = FetchType.LAZY)
 	LocalDate date;
-	@Basic(fetch = FetchType.LAZY)
 	LocalTime time;
 
 	public static Target generateObjectTarget(String name, LocalDate date, LocalTime time) {

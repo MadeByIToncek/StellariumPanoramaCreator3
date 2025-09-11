@@ -13,9 +13,7 @@ import java.util.UUID;
 public class StartEndTransition {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
-	@Basic(fetch = FetchType.LAZY)
 	UUID uuid;
-	@Basic(fetch = FetchType.LAZY)
 	String name;
 	@Basic(fetch = FetchType.LAZY)
 	int duration;

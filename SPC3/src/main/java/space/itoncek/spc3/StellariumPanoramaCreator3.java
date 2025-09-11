@@ -114,6 +114,7 @@ public class StellariumPanoramaCreator3 implements Closeable {
 					ScheduledExecutorService ses = Executors.newScheduledThreadPool(1);
 					ses.schedule(()-> {
 						ses.shutdown();
+						ses.close();
 						System.exit(0);
 					},250, TimeUnit.MILLISECONDS);
 				});

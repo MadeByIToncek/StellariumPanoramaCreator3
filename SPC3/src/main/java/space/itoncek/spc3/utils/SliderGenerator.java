@@ -31,7 +31,7 @@ public class SliderGenerator {
 				"ConstellationMgr.setFlagArt(false);",
 				"ConstellationMgr.setFlagIsolateSelected(true);",
 				"LandscapeMgr.setAtmosphereModel(\"ShowMySky\");",
-				"LandscapeMgr.setAtmosphereModelPath(\"D:/Program Files/Stellarium/atmosphere/default\");",
+				"LandscapeMgr.setAtmosphereModelPath(\"C:/Users/user/scoop/apps/stellarium/current/atmosphere/default\");",
 				"LandscapeMgr.setAtmosphereShowMySkyStoppedWithError(true);",
 				"core.wait(2);",
 				"var label = LandscapeMgr.getAtmosphereShowMySkyStatusText();",

@@ -495,12 +495,12 @@
                 transition: uuid
             }), (res, status) => {
                 if (status === 200) {
-                    success("Targeting!")
+                    success("Previewing!")
                     setTimeout(function () {
                         updateVariables();
                     }, 3000);
                 } else {
-                    error("There has been an error while targeting Stellarium!")
+                    error("There has been an error while previewing in Stellarium!")
                     setTimeout(function () {
                         updateVariables();
                     }, 3000);
@@ -511,7 +511,24 @@
     }
 
     function render() {
-
+        save();
+        setTimeout(function () {
+            httpPostAsync("/api/stellarium/render", JSON.stringify({
+                transition: uuid
+            }), (res, status) => {
+                if (status === 200) {
+                    success("Rendering!")
+                    setTimeout(function () {
+                        updateVariables();
+                    }, 3000);
+                } else {
+                    error("There has been an error while rendering from Stellarium!")
+                    setTimeout(function () {
+                        updateVariables();
+                    }, 3000);
+                }
+            })
+        }, 50);
     }
 
     function validateAll() {
