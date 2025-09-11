@@ -17,7 +17,7 @@ class SliderGeneratorTest {
 		StartEndTransition set = StartEndTransition.createTransition(start,end);
 		set.setUuid(UUID.randomUUID());
 
-		String s = SliderGenerator.generateScript(set,true);
+		String s = SliderGenerator.generateScript(set,true,"");
 		System.out.println(s);
 		assertTrue(true);
 	}

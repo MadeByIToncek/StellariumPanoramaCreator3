@@ -28,6 +28,7 @@ public class KeyStore {
 	}
 
 	public enum KeystoreKeys {
-		STELLARIUM_URL
+		STELLARIUM_URL,
+		RENDERING_PATH
 	}
 }

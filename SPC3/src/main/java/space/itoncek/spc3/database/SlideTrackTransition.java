@@ -16,11 +16,17 @@ public class SlideTrackTransition {
 	@Id
 	@GeneratedValue(strategy = GenerationType.UUID)
 	UUID uuid;
+	@Basic(fetch = FetchType.LAZY)
 	String name;
+	@Basic(fetch = FetchType.LAZY)
 	String target;
+	@Basic(fetch = FetchType.LAZY)
 	LocalDate startDate;
+	@Basic(fetch = FetchType.LAZY)
 	LocalTime startTime;
+	@Basic(fetch = FetchType.LAZY)
 	LocalDate endDate;
+	@Basic(fetch = FetchType.LAZY)
 	LocalTime endTime;
 
 	public JSONObject toSimpleJson() {

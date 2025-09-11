@@ -3,6 +3,7 @@ package space.itoncek.spc3.utils;
 import space.itoncek.spc3.database.StartEndTransition;
 import space.itoncek.spc3.database.Target;
 
+import java.io.File;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -12,13 +13,13 @@ import java.util.stream.Stream;
 
 public class SliderGenerator {
 	public static final int framesPerSecond = 50;
-	public static String generateScript(StartEndTransition set, boolean preview) {
+	public static String generateScript(StartEndTransition set, boolean preview, String basePath) {
 		return generateMethods() + "\n\n" +
 	   generateInit() + "\n\n" +
 	   generateTargetOptions(set) + "\n\n" +
 	   generateJdToDateTime() + "\n\n" +
 	   generatePreStartScript(set) + "\n\n" +
-	   generateMainLoop(set, preview);
+	   generateMainLoop(set, preview, basePath);
 	}
 
 	private static String generateInit() {
@@ -41,7 +42,7 @@ public class SliderGenerator {
 				"StelSkyDrawer.setFlagLuminanceAdaptation(false);").parallel().collect(() ->new StringBuilder("\n"), StringBuilder::append, StringBuilder::append).toString();
 	}
 
-	private static String generateMainLoop(StartEndTransition set, boolean preview) {
+	private static String generateMainLoop(StartEndTransition set, boolean preview, String basePath) {
 		String str = """
 				for(var i = 0; i < steps; i++) {
 					var t = i/steps;
@@ -57,16 +58,21 @@ public class SliderGenerator {
 					core.wait(0.01);
 				""";
 		if (!preview) {
-			str += "core.screenshot((\"\"+i).padStart(4,\"0\"),false,\"%s\",true,\"jpeg\");\n".formatted(determineFolderName(set));
+			str += "	core.screenshot((\"\"+i).padStart(4,\"0\"),false,\"%s\",true,\"jpeg\");\n".formatted(determineFolderName(set, basePath));
 		}
 		str += "}";
 		return str;
 	}
 
-	private static String determineFolderName(StartEndTransition set) {
+	private static String determineFolderName(StartEndTransition set, String basePath) {
+		String s;
 		if (set.getName() == null || set.getName().isEmpty()) {
-			return set.getUuid().toString();
-		} else return set.getName();
+			s = basePath + "\\" + set.getUuid().toString();
+		} else {
+			s = basePath + "\\" + set.getName();
+		}
+		new File(s).mkdirs();
+		return s;
 	}
 
 	private static String generatePreStartScript(StartEndTransition set) {

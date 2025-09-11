@@ -38,9 +38,14 @@ public class StellariumCommsManager implements Manager {
 		this.spc3 = spc3;
 		this.spc3.sf.runInTransaction(em -> {
 			KeyStore ks = em.find(KeyStore.class, KeyStore.KeystoreKeys.STELLARIUM_URL);
+			KeyStore k2 = em.find(KeyStore.class, KeyStore.KeystoreKeys.RENDERING_PATH);
 			if (ks == null) {
 				ks = KeyStore.generateKeystore(KeyStore.KeystoreKeys.STELLARIUM_URL, "http://[::1]:8090");
 				em.persist(ks);
+			}
+			if(k2 == null) {
+				k2 = KeyStore.generateKeystore(KeyStore.KeystoreKeys.RENDERING_PATH, "X:\\SPC3_OUT\\");
+				em.persist(k2);
 			}
 			lock.lock();
 			api = new StellariumAPI(ks.kvalue);
@@ -87,7 +92,7 @@ public class StellariumCommsManager implements Manager {
 				}
 
 				try {
-					api.getScriptHandler().direct(SliderGenerator.generateScript(set, false));
+					api.getScriptHandler().direct(SliderGenerator.generateScript(set, false, em.find(KeyStore.class, KeyStore.KeystoreKeys.RENDERING_PATH).kvalue));
 				} catch (IOException e) {
 					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Stellarium error").toString(4));
 				}
@@ -109,7 +114,7 @@ public class StellariumCommsManager implements Manager {
 				}
 
 				try {
-					api.getScriptHandler().direct(SliderGenerator.generateScript(set, true));
+					api.getScriptHandler().direct(SliderGenerator.generateScript(set, true,""));
 				} catch (IOException e) {
 					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Stellarium error").toString(4));
 				}
@@ -121,6 +126,7 @@ public class StellariumCommsManager implements Manager {
 
 	private void copyCurrentObject(@NotNull Context ctx) throws IOException, InterruptedException {
 		if (!api.getScriptHandler().status().isRunning()) {
+			lock.lock();
 			JSONObject body = new JSONObject(ctx.body());
 			boolean start = body.getString("target").equals("start");
 			UUID startEndTransitionID = UUID.fromString(body.getString("transition"));
@@ -187,6 +193,7 @@ public class StellariumCommsManager implements Manager {
 					throw new RuntimeException(e);
 				}
 			});
+			lock.unlock();
 		} else {
 			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
 		}
@@ -194,6 +201,7 @@ public class StellariumCommsManager implements Manager {
 
 	private void copyCurrent(@NotNull Context ctx) throws IOException, InterruptedException {
 		if (!api.getScriptHandler().status().isRunning()) {
+			lock.lock();
 			JSONObject body = new JSONObject(ctx.body());
 			boolean start = body.getString("target").equals("start");
 			UUID startEndTransitionID = UUID.fromString(body.getString("transition"));
@@ -227,6 +235,7 @@ public class StellariumCommsManager implements Manager {
 					throw new RuntimeException(e);
 				}
 			});
+			lock.unlock();
 		} else {
 			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
 		}
@@ -234,6 +243,7 @@ public class StellariumCommsManager implements Manager {
 
 	private void retargetObject(@NotNull Context ctx) throws IOException, InterruptedException {
 		if (!api.getScriptHandler().status().isRunning()) {
+			lock.lock();
 			JSONObject body = new JSONObject(ctx.body());
 			boolean start = body.getString("target").equals("start");
 			UUID startEndTransitionID = UUID.fromString(body.getString("transition"));
@@ -272,6 +282,7 @@ public class StellariumCommsManager implements Manager {
 					ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 				}
 			});
+			lock.unlock();
 		} else {
 			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
 		}
@@ -279,6 +290,7 @@ public class StellariumCommsManager implements Manager {
 
 	private void retarget(@NotNull Context ctx) throws IOException, InterruptedException {
 		if (!api.getScriptHandler().status().isRunning()) {
+			lock.lock();
 			JSONObject body = new JSONObject(ctx.body());
 			boolean start = body.getString("target").equals("start");
 			UUID startEndTransitionID = UUID.fromString(body.getString("transition"));
@@ -318,6 +330,7 @@ public class StellariumCommsManager implements Manager {
 					ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result("ok");
 				}
 			});
+			lock.unlock();
 		} else {
 			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
 		}
@@ -325,6 +338,8 @@ public class StellariumCommsManager implements Manager {
 
 	@Override
 	public void close() {
+		lock.lock();
 		api.close();
+		lock.unlock();
 	}
 }

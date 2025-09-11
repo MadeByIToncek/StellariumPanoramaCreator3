@@ -31,6 +31,15 @@
 					</span>
                 </div>
             </div>
+            <div class="field">
+                <label class="label">Rendering path</label>
+                <div class="control has-icons-left has-icons-right">
+                    <input class="input" type="text" id="renderPath" placeholder="http://[::1]:8090">
+                    <span class="icon is-small is-left">
+						<span class="material-symbols-rounded">lan</span>
+					</span>
+                </div>
+            </div>
             <button onclick="updateValues()" class="button is-primary" id="update-button">Update</button>
         </div>
         <div class="cell"></div>
@@ -45,7 +54,7 @@
 </div>
 </body>
 
-<script src="/internal/commons.js" async></script>
+<script src="/internal/commons.js"></script>
 <script>
     const unreachableError = "" +
         "            <div class=\"notification is-danger\">\n" +
@@ -90,7 +99,7 @@
     }
 
     function reloadValues() {
-        const barrier = new CountdownLatch(1);
+        const barrier = new CountdownLatch(2);
         disableInput();
         httpGetAsync("/api/keystore/STELLARIUM_URL", (res,status) => {
             const body = JSON.parse(res);
@@ -99,6 +108,16 @@
                 saveDefaultValues();
             } else {
                 document.getElementById("stellariumAddress").value = body.value
+                barrier.countDown();
+            }
+        })
+        httpGetAsync("/api/keystore/RENDERING_PATH", (res,status) => {
+            const body = JSON.parse(res);
+            if(status !== 200) {
+                console.log("Status")
+                saveDefaultValues();
+            } else {
+                document.getElementById("renderPath").value = body.value
                 barrier.countDown();
             }
         })
