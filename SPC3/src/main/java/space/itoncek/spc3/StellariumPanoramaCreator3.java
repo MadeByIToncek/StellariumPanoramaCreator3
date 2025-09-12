@@ -48,7 +48,7 @@ public class StellariumPanoramaCreator3 implements Closeable {
 				.jdbcPassword("")
 				// Automatic schema export
 				.schemaToolingAction(Action.UPDATE)
-				.jdbcPoolSize(1)
+				.jdbcPoolSize(16)
 				// SQL statement logging
 				.showSql(true, false, true)
 				.createEntityManagerFactory();
@@ -123,20 +123,31 @@ public class StellariumPanoramaCreator3 implements Closeable {
 	}
 
 	private void loadCache() {
+		log.info("Preloading static files");
+		long startTime = System.nanoTime();
 		loadFile("/static/index.html");
 		loadFile("/static/startend_transition_editor.html");
 		loadFile("/static/slidetrack_transition_editor.html");
 		loadFile("/static/config.html");
 		loadFile("/static/internal/bulma.min.css");
 		loadFile("/static/internal/commons.js");
+		long endTime = System.nanoTime();
+
+		float duration = (endTime - startTime) / 1_000_000f;
+		log.info("Preloading finished, took {}ms",duration);
 	}
 
 	private void loadFile(String s) {
+		long startTime = System.nanoTime();
 		try {
 			cache.put(s, readResource(s));
 		} catch (IOException e) {
 			log.warn("Unable to pre-load resource {}", s, e);
 		}
+		long endTime = System.nanoTime();
+
+		float duration = (endTime - startTime) / 1_000_000f;
+		log.debug("Loading {} took {}ms",s,duration);
 	}
 
 	private byte[] readResource(String path) throws IOException {

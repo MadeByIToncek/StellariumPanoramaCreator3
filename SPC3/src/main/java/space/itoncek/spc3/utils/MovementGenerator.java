@@ -6,7 +6,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
-public class MovementGenerator {
+public class MovementGenerator extends GenericSliderGenerator{
 	public static String generateCenterObject(String objectName) {
 		return """
 				core.moveToObject("%s",.01);
@@ -21,6 +21,6 @@ public class MovementGenerator {
 		return """
 				core.setTimeRate(0);
 				core.setDate("%s");
-				""".formatted(LocalDateTime.of(date, time).atZone(ZoneId.systemDefault()).withZoneSameInstant(ZoneId.of("Z")).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+				""".formatted(dateToString(date,time));
 	}
 }

@@ -4,17 +4,18 @@ import static io.javalin.apibuilder.ApiBuilder.*;
 import io.javalin.http.ContentType;
 import io.javalin.http.Context;
 import io.javalin.http.HttpStatus;
-import kotlin.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 import space.itoncek.spc3.StellariumPanoramaCreator3;
 import space.itoncek.spc3.database.KeyStore;
+import space.itoncek.spc3.database.SlideTrackTransition;
 import space.itoncek.spc3.database.StartEndTransition;
 import space.itoncek.spc3.database.Target;
 import space.itoncek.spc3.generics.Manager;
 import space.itoncek.spc3.utils.MovementGenerator;
-import space.itoncek.spc3.utils.SliderGenerator;
+import space.itoncek.spc3.utils.SlidetrackGenerator;
+import space.itoncek.spc3.utils.StartEndGenerator;
 import space.itoncek.stellarium.api.StellariumAPI;
 import space.itoncek.stellarium.api.objects.AltAz;
 import space.itoncek.stellarium.api.objects.StatusResponse;
@@ -96,12 +97,38 @@ public class StellariumCommsManager implements Manager {
 			spc3.sf.runInTransaction(em -> {
 				StartEndTransition set = em.find(StartEndTransition.class, startEndTransitionID);
 				if (set == null) {
+					try {
+						renderSlidetrack(ctx);
+					} catch (IOException | InterruptedException e) {
+						throw new RuntimeException(e);
+					}
+					return;
+				}
+
+				try {
+					api.getScriptHandler().direct(StartEndGenerator.generateScript(set, false, em.find(KeyStore.class, KeyStore.KeystoreKeys.RENDERING_PATH).kvalue));
+				} catch (IOException e) {
+					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Stellarium error").toString(4));
+				}
+			});
+		}else {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+		}
+	}
+
+	private void renderSlidetrack(@NotNull Context ctx) throws IOException, InterruptedException {
+		if (!api.getScriptHandler().status().isRunning()) {
+			JSONObject body = new JSONObject(ctx.body());
+			UUID startEndTransitionID = UUID.fromString(body.getString("transition"));
+			spc3.sf.runInTransaction(em -> {
+				SlideTrackTransition set = em.find(SlideTrackTransition.class, startEndTransitionID);
+				if (set == null) {
 					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Unable to find that transition").toString(4));
 					return;
 				}
 
 				try {
-					api.getScriptHandler().direct(SliderGenerator.generateScript(set, false, em.find(KeyStore.class, KeyStore.KeystoreKeys.RENDERING_PATH).kvalue));
+					api.getScriptHandler().direct(SlidetrackGenerator.generateScript(set, false, em.find(KeyStore.class, KeyStore.KeystoreKeys.RENDERING_PATH).kvalue));
 				} catch (IOException e) {
 					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Stellarium error").toString(4));
 				}
@@ -118,12 +145,38 @@ public class StellariumCommsManager implements Manager {
 			spc3.sf.runInTransaction(em -> {
 				StartEndTransition set = em.find(StartEndTransition.class, startEndTransitionID);
 				if (set == null) {
+					try {
+						previewSlidetrack(ctx);
+					} catch (IOException | InterruptedException e) {
+						throw new RuntimeException(e);
+					}
+					return;
+				}
+
+				try {
+					api.getScriptHandler().direct(StartEndGenerator.generateScript(set, true,""));
+				} catch (IOException e) {
+					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Stellarium error").toString(4));
+				}
+			});
+		}else {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+		}
+	}
+
+	private void previewSlidetrack(Context ctx) throws IOException, InterruptedException {
+		if (!api.getScriptHandler().status().isRunning()) {
+			JSONObject body = new JSONObject(ctx.body());
+			UUID startEndTransitionID = UUID.fromString(body.getString("transition"));
+			spc3.sf.runInTransaction(em -> {
+				SlideTrackTransition stt = em.find(SlideTrackTransition.class, startEndTransitionID);
+				if (stt == null) {
 					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Unable to find that transition").toString(4));
 					return;
 				}
 
 				try {
-					api.getScriptHandler().direct(SliderGenerator.generateScript(set, true,""));
+					api.getScriptHandler().direct(SlidetrackGenerator.generateScript(stt, true,""));
 				} catch (IOException e) {
 					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Stellarium error").toString(4));
 				}

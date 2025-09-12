@@ -31,7 +31,7 @@ public class ScriptHandler implements Closeable {
 	}
 
 	public void direct(String script) throws IOException {
-		//System.out.println(script);
+		System.out.println(script);
 		CloseableHttpClient httpclient = HttpClients.createDefault();
 		HttpPost httpPost = new HttpPost(url + "/api/scripts/direct");
 

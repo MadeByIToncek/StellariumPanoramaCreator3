@@ -74,12 +74,29 @@
     }
 
     function saveValues() {
+        const barrier = new CountdownLatch(2);
+        httpPatchAsync("/api/keystore/RENDERING_PATH", document.getElementById("renderPath").value, (res,status) => {
+            if(status === 200) {
+                barrier.countDown();
+            }
+        })
+        httpPatchAsync("/api/keystore/STELLARIUM_URL", document.getElementById("stellariumAddress").value, (res,status) => {
+            if(status === 200) {
+                barrier.countDown();
+            }
+        })
 
+        barrier.await(()=> reloadValues())
     }
 
     function saveDefaultValues() {
-        const barrier = new CountdownLatch(1);
+        const barrier = new CountdownLatch(2);
         httpPutAsync("/api/keystore/STELLARIUM_URL", "http://[::1]:8090", (res,status) => {
+            if(status === 200) {
+                barrier.countDown();
+            }
+        })
+        httpPutAsync("/api/keystore/RENDERING_PATH", "X:\\SPC3_OUT", (res,status) => {
             if(status === 200) {
                 barrier.countDown();
             }
