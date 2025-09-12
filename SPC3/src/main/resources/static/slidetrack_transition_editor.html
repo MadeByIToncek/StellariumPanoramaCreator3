@@ -10,10 +10,416 @@
 </head>
 
 <body>
-
+<div style="margin: 16px">
+    <button class="button" onclick="location.href = '/';">
+                <span class="icon">
+                    <span class="material-symbols-rounded">arrow_back</span>
+                </span>
+        <span>Return</span>
+    </button>
+</div>
+<div class="columns" style="margin: 16px">
+    <div class="column box" style="margin: 16px" id="startbox">
+        <div class="skeleton-lines">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+    <div class="column box" style="margin: 16px" id="endbox">
+        <div class="skeleton-lines">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+    <div class="column box" style="margin: 16px" id="databox">
+        <div class="skeleton-lines">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+</div>
 </body>
-<script src="/internal/commons.js" async></script>
+
+<script src="/internal/commons.js"></script>
 <script>
     const uuid = window.location.pathname.split("/")[2];
+    let data = {};
+
+    const dateRegex = /^([0-9]{4})(-?)(1[0-2]|0[1-9])\2(3[01]|0[1-9]|[12][0-9])$/gm;
+    const timeRegex = /^(2[0-3]|[01][0-9]):?([0-5][0-9]):?([0-5][0-9])$/gm;
+    const durationRegex = /^([0-5][0-9]):?([0-5][0-9])$/gm;
+
+    const timeBox =
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Date</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-date\" placeholder=\"1970-01-01\" value=\"{1}\" oninput='validateAll()'>\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Time</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"{0}-time\" placeholder=\"00:00\" value=\"{2}\" oninput='validateAll()'>\n" +
+        "    </div>\n" +
+        "</div>\n"+
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Zoom</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"number\" id=\"{0}-zoom\" placeholder=\"120.9616\" value=\"{3}\">\n" +
+        "    </div>\n" +
+        "</div>\n"+
+        "<div class=\"field has-addons\">\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" id=\"{0}-retarget\" onclick=\"retarget('{0}')\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">my_location</span>\n" +
+        "            </span>\n" +
+        "            <span>Target in Stellarium</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" id=\"{0}-copy\" onclick=\"copyCurrent('{0}')\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">content_copy</span>\n" +
+        "            </span>\n" +
+        "            <span>Copy current</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "</div>";
+
+    const dataBox = "" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Name</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"name\" placeholder=\"Text input\" value='{0}'>\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Duration</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"duration\" placeholder=\"Text input\" oninput='validateAll()' value='{1}'></div>\n" +
+        "</div>\n" +
+        "<div class=\"field\">\n" +
+        "    <label class=\"label\">Target</label>\n" +
+        "    <div class=\"control\">\n" +
+        "        <input class=\"input\" type=\"text\" id=\"target\" placeholder=\"Text input\" value='{2}'>\n" +
+        "    </div>\n" +
+        "</div>\n" +
+        "<div class=\"field has-addons\">\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" id=\"copyTarget\" onclick=\"copyTarget()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">content_copy</span>\n" +
+        "            </span>\n" +
+        "            <span>Copy target</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" id=\"save\" onclick=\"save()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">save</span>\n" +
+        "            </span>\n" +
+        "            <span>Save</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" id=\"preview\" onclick=\"preview()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">preview</span>\n" +
+        "            </span>\n" +
+        "            <span>Preview</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "    <p class=\"control\">\n" +
+        "        <button class=\"button\" id=\"render\" onclick=\"render()\">\n" +
+        "            <span class=\"icon is-small\">\n" +
+        "                <span class=\"material-symbols-rounded\">blender</span>\n" +
+        "            </span>\n" +
+        "            <span>Render</span>\n" +
+        "        </button>\n" +
+        "    </p>\n" +
+        "</div>\n" +
+        "<div id=\"notif\"><!-- Notifications appear here!--> </div>"
+
+    let notifTemplate = "<div class=\"notification {0}\">\n" +
+        "    <button class=\"delete\" onclick='clearNotification()'></button>\n" +
+        "    {1}\n" +
+        "</div>"
+
+    function updateVariables() {
+        const latch = new CountdownLatch(1);
+        let failed = false;
+        httpGetAsync("/api/sttm/" + uuid + "/data", (res, status) => {
+            if(status !== 200) {
+                error("Unable to get data! \n" + JSON.parse(res).error)
+                latch.countDown()
+                failed = true;
+                return
+            }
+            data = JSON.parse(res);
+            latch.countDown();
+        })
+        latch.await(()=> {
+            if(!failed) constructUI();
+        })
+    }
+
+    function copyCurrent(target) {
+        let cdl = new CountdownLatch(2);
+        httpGetAsync("/api/stellarium/currentFov", (res, status) => {
+            if(status !== 200) {
+                error("Unable to get data! \n" + JSON.parse(res).error)
+                return;
+            }
+
+            document.getElementById(target + "-zoom").value = JSON.parse(res).fov
+            cdl.countDown();
+        })
+        httpGetAsync("/api/stellarium/currentDateTime", (res, status) => {
+            if(status !== 200) {
+                error("Unable to get data! \n" + JSON.parse(res).error)
+                return;
+            }
+
+            document.getElementById(target + "-date").value = JSON.parse(res).date
+            document.getElementById(target + "-time").value = JSON.parse(res).time
+            cdl.countDown();
+        })
+        cdl.await(()=> {
+            save();
+        })
+    }
+
+    function copyTarget() {
+        httpGetAsync("/api/stellarium/currentTargetName", (res, status) => {
+            if(status !== 200) {
+                error("Unable to get data! \n" + JSON.parse(res).error)
+                return;
+            }
+
+            document.getElementById("target").value = JSON.parse(res).targetName
+            save();
+        })
+    }
+
+    function retarget(target) {
+        let date = document.getElementById(target+"-date").value;
+        let time = document.getElementById(target+"-time").value;
+        let zoom = parseFloat(document.getElementById(target+"-zoom").value);
+        let tgt = document.getElementById("target").value;
+
+
+        let cdl = new CountdownLatch(3);
+        httpPatchAsync("/api/stellarium/setZoom", JSON.stringify({fov:zoom}), (res, status) => {
+            cdl.countDown();
+        })
+        httpPatchAsync("/api/stellarium/setDateTime", JSON.stringify({date:date, time:time}), (res, status) => {
+            cdl.countDown();
+        })
+        httpPatchAsync("/api/stellarium/centerObject", JSON.stringify({targetName:tgt}), (res, status) => {
+            cdl.countDown();
+        })
+        cdl.await(()=> {
+            updateVariables();
+        })
+    }
+
+    function constructUI() {
+        document.getElementById("startbox").innerHTML = format(timeBox, "start", data.startDate, data.startTime, data.startZoom)
+        document.getElementById("endbox").innerHTML = format(timeBox, "end", data.endDate, data.endTime, data.endZoom)
+
+        document.getElementById("databox").innerHTML = format(dataBox, data.name, toDisplay(data.duration), data.target)
+
+        validateAll();
+    }
+
+    function toDisplay(totalseconds) {
+        let minutes = Math.floor(totalseconds / 60);
+        let seconds = Math.floor(totalseconds - minutes * 60);
+
+        return ("" + minutes).padStart(2, "0") + ":" + ("" + seconds).padStart(2, "0");
+    }
+
+    function fromDisplay(string) {
+        let minutes = parseInt(string.split(":")[0]);
+        let seconds = parseInt(string.split(":")[1]);
+
+        return minutes*60 + seconds;
+    }
+
+    function clearNotification() {
+        let tbody = document.getElementById("notif");
+        tbody.innerHTML = "";
+    }
+
+    function error(result) {
+        let tbody = document.getElementById("notif");
+        if(result == null) {
+            tbody.innerHTML = format(notifTemplate,"is-danger","Undefined error!");
+        }
+        tbody.innerHTML = format(notifTemplate,"is-danger",result);
+    }
+
+    function success(result) {
+        let tbody = document.getElementById("notif");
+        if(result == null) {
+            tbody.innerHTML = format(notifTemplate,"is-success","Undefined success!");
+        }
+        tbody.innerHTML = format(notifTemplate,"is-success",result);
+    }
+
+    function validateAll() {
+        let valid = validateTime("start-time") &&
+            validateDate("start-date") &&
+            validateTime("end-time") &&
+            validateDate("end-date") &&
+            validateDuration("duration")
+        updateButtons(valid);
+    }
+
+    function updateButtons(isValid) {
+        let list = [
+            "start-retarget",
+            "end-retarget",
+            "start-copy",
+            "end-copy",
+            "copyTarget",
+            "save",
+            "preview",
+            "render"
+        ]
+        list.forEach(x => {
+            document.getElementById(x).disabled = !isValid;
+        })
+    }
+
+    function validateDate(object) {
+        let input = document.getElementById(object).value;
+        dateRegex.lastIndex = 0;
+        if (dateRegex.test(input)) {
+            document.getElementById(object).classList.remove("is-danger")
+            document.getElementById(object).classList.add("is-success")
+            return true;
+        } else {
+            document.getElementById(object).classList.remove("is-success")
+            document.getElementById(object).classList.add("is-danger")
+            return false;
+        }
+    }
+
+    function validateTime(object) {
+        let input = document.getElementById(object).value;
+        timeRegex.lastIndex = 0;
+        if (timeRegex.test(input)) {
+            document.getElementById(object).classList.remove("is-danger")
+            document.getElementById(object).classList.add("is-success")
+            return true;
+        } else {
+            document.getElementById(object).classList.remove("is-success")
+            document.getElementById(object).classList.add("is-danger")
+            return false;
+        }
+    }
+    function validateDuration(object) {
+        let input = document.getElementById(object).value;
+        durationRegex.lastIndex = 0;
+        if (durationRegex.test(input)) {
+            document.getElementById(object).classList.remove("is-danger")
+            document.getElementById(object).classList.add("is-success")
+            return true;
+        } else {
+            document.getElementById(object).classList.remove("is-success")
+            document.getElementById(object).classList.add("is-danger")
+            return false;
+        }
+    }
+
+    function save() {
+        let start_date = document.getElementById("start-date");
+        let start_time = document.getElementById("start-time");
+        let start_zoom = document.getElementById("start-zoom");
+
+        let end_date = document.getElementById("end-date");
+        let end_time = document.getElementById("end-time");
+        let end_zoom = document.getElementById("end-zoom");
+
+        let name = document.getElementById("name");
+        let duration = document.getElementById("duration");
+        let target = document.getElementById("target");
+
+
+        let dataString = JSON.stringify({
+            name: name.value,
+            duration: fromDisplay(duration.value),
+            target: target.value,
+            startZoom: parseFloat(start_zoom.value),
+            endZoom: parseFloat(end_zoom.value),
+            startDate: start_date.value,
+            endDate: end_date.value,
+            startTime: start_time.value,
+            endTime: end_time.value
+        })
+
+        let cdl = new CountdownLatch(1);
+
+        httpPatchAsync("/api/sttm/" + uuid + "/data", dataString, (res, status) => {
+            cdl.countDown();
+        })
+
+        cdl.await(() => {
+            updateVariables();
+        })
+    }
+
+    function preview() {
+        save();
+        setTimeout(function () {
+            httpPostAsync("/api/stellarium/preview", JSON.stringify({
+                transition: uuid
+            }), (res, status) => {
+                if (status === 200) {
+                    success("Previewing!")
+                    setTimeout(function () {
+                        updateVariables();
+                    }, 3000);
+                } else {
+                    error("There has been an error while previewing in Stellarium!")
+                    setTimeout(function () {
+                        updateVariables();
+                    }, 3000);
+                }
+
+            })
+        }, 50);
+    }
+
+    function render() {
+        save();
+        setTimeout(function () {
+            httpPostAsync("/api/stellarium/render", JSON.stringify({
+                transition: uuid
+            }), (res, status) => {
+                if (status === 200) {
+                    success("Rendering!")
+                    setTimeout(function () {
+                        updateVariables();
+                    }, 3000);
+                } else {
+                    error("There has been an error while rendering from Stellarium!")
+                    setTimeout(function () {
+                        updateVariables();
+                    }, 3000);
+                }
+            })
+        }, 50);
+    }
+
+    updateVariables();
 </script>
 </html>

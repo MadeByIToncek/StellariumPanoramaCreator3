@@ -13,11 +13,13 @@ import space.itoncek.spc3.database.KeyStore;
 import space.itoncek.spc3.database.StartEndTransition;
 import space.itoncek.spc3.database.Target;
 import space.itoncek.spc3.generics.Manager;
+import space.itoncek.spc3.utils.MovementGenerator;
 import space.itoncek.spc3.utils.SliderGenerator;
 import space.itoncek.stellarium.api.StellariumAPI;
 import space.itoncek.stellarium.api.objects.AltAz;
 import space.itoncek.stellarium.api.objects.StatusResponse;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -44,7 +46,7 @@ public class StellariumCommsManager implements Manager {
 				em.persist(ks);
 			}
 			if(k2 == null) {
-				k2 = KeyStore.generateKeystore(KeyStore.KeystoreKeys.RENDERING_PATH, "X:\\SPC3_OUT\\");
+				k2 = KeyStore.generateKeystore(KeyStore.KeystoreKeys.RENDERING_PATH, new File("./output").getAbsolutePath());
 				em.persist(k2);
 			}
 			lock.lock();
@@ -77,6 +79,13 @@ public class StellariumCommsManager implements Manager {
 			post("copyCurrent", this::copyCurrent);
 			post("retargetObject", this::retargetObject);
 			post("copyCurrentObject", this::copyCurrentObject);
+			//todo)) Migrate previous methods to new api!
+			get("currentTargetName", this::getCurrentTargetName);
+			get("currentFov", this::getFov);
+			get("currentDateTime", this::getDateTime);
+			patch("setZoom", this::setZoom);
+			patch("setDateTime", this::setDateTime);
+			patch("centerObject", this::centerObject);
 		});
 	}
 
@@ -196,6 +205,150 @@ public class StellariumCommsManager implements Manager {
 			lock.unlock();
 		} else {
 			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+		}
+	}
+
+	private void getCurrentTargetName(@NotNull Context ctx) {
+		try {
+			if (!api.getScriptHandler().status().isRunning()) {
+				StatusResponse status = api.getMainHandler().getStatus();
+
+				final Pattern pattern = Pattern.compile("<h2>(.*?)</h2>", Pattern.MULTILINE);
+				final Matcher matcher = pattern.matcher(status.selectionInfo());
+
+				if (!matcher.find()) {
+					ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Target does not exist!").toString(4));
+					return;
+				}
+
+				String name = matcher.group(1);
+				String targetName = "";
+
+				if (name.contains("(") && name.contains(")")) {
+					String line = Arrays.stream(Arrays.stream(name.split("\\r?<br />")).map(x -> x.split("\\r?<br>")).toList().getFirst()).map(String::trim).toArray(String[]::new)[0];
+					final Pattern pattern2 = Pattern.compile("\\((.*?)\\)", Pattern.MULTILINE);
+					final Matcher matcher2 = pattern2.matcher(line);
+
+					if (!matcher2.find()) {
+						ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Target does not exist!").toString(4));
+						return;
+					}
+
+					String brackets = "(" + matcher2.group(1) + ")";
+					targetName = line.replace(brackets, "").trim();
+				} else {
+					String[] names = Arrays.stream(name.split("\\r?-")).map(String::trim).toArray(String[]::new);
+
+					Optional<String> hd = Arrays.stream(names).filter(x -> x.startsWith("HD")).findFirst();
+					if (hd.isPresent()) {
+						targetName = hd.get();
+					} else {
+						Optional<String> first = Arrays.stream(names).findFirst();
+						targetName = first.orElse(name);
+					}
+				}
+
+				System.out.println(targetName);
+				ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(new JSONObject()
+						.put("targetName", targetName)
+						.toString(4));
+			} else {
+				ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+			}
+		} catch (Exception e) {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "An exception has occured!").toString(4));
+			log.error("Cannot get current target name!", e);
+		}
+	}
+
+	private void getDateTime(@NotNull Context ctx) {
+		try {
+			if (!api.getScriptHandler().status().isRunning()) {
+				StatusResponse status = api.getMainHandler().getStatus();
+
+				LocalDate localDate = status.time().local().toLocalDateTime().toLocalDate();
+				LocalTime localTime = status.time().local().toLocalDateTime().toLocalTime();
+
+
+				ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(new JSONObject()
+								.put("date", localDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+								.put("time", localTime.format(DateTimeFormatter.ISO_LOCAL_TIME))
+						.toString(4));
+			} else {
+				ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+			}
+		} catch (Exception e) {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "An exception has occured!").toString(4));
+			log.error("Cannot get current date and time!", e);
+		}
+	}
+
+	private void getFov(@NotNull Context ctx) {
+		try {
+			if (!api.getScriptHandler().status().isRunning()) {
+				StatusResponse status = api.getMainHandler().getStatus();
+				double fov = status.fov();
+				ctx.status(HttpStatus.OK).contentType(ContentType.APPLICATION_JSON).result(new JSONObject()
+						.put("fov", fov)
+						.toString(4));
+			} else {
+				ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+			}
+		} catch (Exception e) {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "An exception has occured!").toString(4));
+			log.error("Cannot get current FOV!", e);
+		}
+	}
+
+	private void centerObject(@NotNull Context ctx) {
+		try {
+			if (!api.getScriptHandler().status().isRunning()) {
+				JSONObject o = new JSONObject(ctx.body());
+
+				String s = o.getString("targetName");
+				api.getScriptHandler().direct(MovementGenerator.generateCenterObject(s));
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
+			} else {
+				ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+			}
+		} catch (Exception e) {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "An exception has occured!").toString(4));
+			log.error("Cannot target selected object!", e);
+		}
+	}
+
+	private void setZoom(@NotNull Context ctx) {
+		try {
+			if (!api.getScriptHandler().status().isRunning()) {
+				JSONObject o = new JSONObject(ctx.body());
+
+				double s = o.getDouble("fov");
+				api.getScriptHandler().direct(MovementGenerator.generateZoom(s));
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
+			} else {
+				ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+			}
+		} catch (Exception e) {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "An exception has occured!").toString(4));
+			log.error("Cannot target selected object!", e);
+		}
+	}
+
+	private void setDateTime(@NotNull Context ctx) {
+		try {
+			if (!api.getScriptHandler().status().isRunning()) {
+				JSONObject o = new JSONObject(ctx.body());
+
+				LocalDate date = LocalDate.parse(o.getString("date"));
+				LocalTime time = LocalTime.parse(o.getString("time"));
+				api.getScriptHandler().direct(MovementGenerator.generateDateTime(date,time));
+				ctx.status(HttpStatus.OK).contentType(ContentType.TEXT_PLAIN).result("ok");
+			} else {
+				ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "Script is running!").toString(4));
+			}
+		} catch (Exception e) {
+			ctx.status(HttpStatus.BAD_REQUEST).contentType(ContentType.APPLICATION_JSON).result(new JSONObject().put("error", "An exception has occured!").toString(4));
+			log.error("Cannot target selected object!", e);
 		}
 	}
 

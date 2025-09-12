@@ -80,6 +80,15 @@ public class TransitionManager implements Manager {
 									.put("result", "ok")
 									.toString(4));
 				}
+				case "slidetrack" -> {
+					SlideTrackTransition stt = SlideTrackTransition.createTransition("Mars",LocalDate.now(), LocalTime.now(), LocalDate.now(), LocalTime.now().plusHours(1),60,60);
+					em.persist(stt);
+					ctx.status(HttpStatus.OK)
+							.contentType(ContentType.APPLICATION_JSON)
+							.result(new JSONObject()
+									.put("result", "ok")
+									.toString(4));
+				}
 				default -> {
 					ctx.status(HttpStatus.OK)
 							.contentType(ContentType.APPLICATION_JSON)
