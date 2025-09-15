@@ -37,5 +37,5 @@ build/
 ### Mac OS ###
 .DS_Store
 /SPC3/dependency-reduced-pom.xml
-/SPC3.lock.db
-/SPC3.mv.db
+*.lock.db
+*.mv.db
