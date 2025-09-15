@@ -137,6 +137,7 @@
                 return;
             }
             let body = JSON.parse(res);
+            let entries = [];
             body.forEach(x => {
                 let uuid = x.uuid;
                 let name = x.name;
@@ -145,8 +146,21 @@
                     name = "";
                 }
 
-                let html = format(template, uuid, name);
+                let entry = {
+                    uuid: uuid,
+                    name: name
+                }
+                entries.push(entry)
+            })
+
+            entries.sort((x,y) => {
+                return x.name.localeCompare(y.name) || x.uuid.localeCompare(y.uuid);
+            })
+
+            entries.forEach(x => {
+                let html = format(template, x.uuid, x.name);
                 tbody.innerHTML += html;
+                tbody.innerHTML += "\n";
             })
         })
     }
