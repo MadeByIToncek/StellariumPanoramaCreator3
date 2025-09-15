@@ -25,7 +25,7 @@ public class StartEndGenerator extends GenericSliderGenerator{
 	private static String generateMainLoop(StartEndTransition set, boolean preview, String basePath) {
 		String str = """
 				for(var i = 0; i < steps; i++) {
-					var t = i/steps;
+					var t = i/(steps-1);
 					var alt = lerpsmooth(startalt, endalt, t);
 					var az = lerpsmooth(startaz, endaz, t);
 					var zoom = lerpsmooth(startFov, endFov, t);

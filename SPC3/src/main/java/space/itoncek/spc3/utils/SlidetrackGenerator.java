@@ -20,7 +20,7 @@ public class SlidetrackGenerator extends GenericSliderGenerator{
 	private static String generateMainLoop(SlideTrackTransition set, boolean preview, String basePath) {
 		String str = """
 				for(var i = 0; i < steps; i++) {
-					var t = i/steps;
+					var t = i/(steps-1);
 					var zoom = lerpsmooth(startFov, endFov, t);
 					var day = Math.floor(lerpsmooth(startDay+.5, endDay+.5, t));
 					var hour = lerpsmooth(startHour, endHour, t);
