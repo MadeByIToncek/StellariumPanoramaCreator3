@@ -68,7 +68,7 @@
         <dependency>
             <groupId>space.itoncek</groupId>
             <artifactId>StellariumAPI</artifactId>
-            <version>0.1.0</version>
+            <version>0.2.0</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
@@ -143,6 +143,6 @@
     <parent>
         <groupId>space.itoncek</groupId>
         <artifactId>StellariumPanoramaCreator3</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
     </parent>
 </project>
