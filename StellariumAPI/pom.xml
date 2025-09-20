@@ -14,7 +14,7 @@
     <parent>
         <groupId>space.itoncek</groupId>
         <artifactId>StellariumPanoramaCreator3</artifactId>
-        <version>0.1.0</version>
+        <version>0.2.0</version>
     </parent>
     <dependencies>
         <dependency>
